@@ -1,0 +1,41 @@
+﻿<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="test.description" xml:space="preserve">
+        <value>делает всякие приколы</value>
+    </data>
+    <data name="resp.test.success" xml:space="preserve">
+        <value>чекай прикол</value>
+    </data>
+    <data name="resp.test.failure" xml:space="preserve">
+        <value>хуйня</value>
+    </data>
+    <data name="guild.description" xml:space="preserve">
+        <value>Команды для управление настройками гилда</value>
+    </data>
+    <data name="resp.guild.locale.set" xml:space="preserve">
+        <value>Язык обновлен</value>
+    </data>
+    <data name="guild.locale.description" xml:space="preserve">
+        <value>Ставит язык на котором бот будет отвечать</value>
+    </data>
+    <data name="test.name" xml:space="preserve">
+        <value>test</value>
+    </data>
+    <data name="guild.name" xml:space="preserve">
+        <value>guild</value>
+    </data>
+    <data name="guild.locale.name" xml:space="preserve">
+        <value>locale</value>
+    </data>
+</root>
