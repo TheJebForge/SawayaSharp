@@ -66,10 +66,10 @@
         <value>Воспроизведение остановлено</value>
     </data>
     <data name="resp.player.controls.volume.increase" xml:space="preserve">
-        <value>Громкость увеличена до {0}%</value>
+        <value>Громкость увеличена до {0:0}%</value>
     </data>
     <data name="resp.player.controls.volume.decrease" xml:space="preserve">
-        <value>Громкость уменьшена до {0}%</value>
+        <value>Громкость уменьшена до {0:0}%</value>
     </data>
     <data name="resp.player.volume.set" xml:space="preserve">
         <value>Громкость поставлена на {0}%</value>

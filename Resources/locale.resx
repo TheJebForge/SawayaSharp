@@ -60,10 +60,10 @@
         <value>Playback stopped</value>
     </data>
     <data name="resp.player.controls.volume.increase" xml:space="preserve">
-        <value>Volume increased to {0}%</value>
+        <value>Volume increased to {0:0}%</value>
     </data>
     <data name="resp.player.controls.volume.decrease" xml:space="preserve">
-        <value>Volume decreased to {0}%</value>
+        <value>Volume decreased to {0:0}%</value>
     </data>
     <data name="resp.player.volume.set" xml:space="preserve">
         <value>Volume set to {0}%</value>

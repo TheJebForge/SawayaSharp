@@ -251,7 +251,7 @@ public class PlayerModule: InteractionModuleBase
         if (player != null) {
             var newVolume = Math.Min(1.5f, player.Volume + VolumeIncrement);
             await player.SetVolumeAsync(newVolume);
-            await RespondAsync(_locale["resp.player.controls.volume.increase", Math.Round(player.Volume * 100)]);
+            await RespondAsync(_locale["resp.player.controls.volume.increase", player.Volume * 100]);
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
@@ -266,7 +266,7 @@ public class PlayerModule: InteractionModuleBase
         if (player != null) {
             var newVolume = Math.Max(0f, player.Volume - VolumeIncrement);
             await player.SetVolumeAsync(newVolume);
-            await RespondAsync(_locale["resp.player.controls.volume.decrease", Math.Round(player.Volume * 100)]);
+            await RespondAsync(_locale["resp.player.controls.volume.decrease", player.Volume * 100]);
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
