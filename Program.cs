@@ -4,6 +4,12 @@ using Discord;
 using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
+using Lavalink4NET;
+using Lavalink4NET.Artwork;
+using Lavalink4NET.DiscordNet;
+using Lavalink4NET.Logging.Microsoft;
+using Lavalink4NET.Player;
+using Lavalink4NET.Tracking;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
@@ -12,9 +18,6 @@ using SawayaSharp;
 using SawayaSharp.Modules;
 using System.Globalization;
 using System.Reflection;
-using Victoria;
-using Victoria.Enums;
-using Victoria.Responses.Search;
 #pragma warning disable CS4014
 
 // Getting configuration
@@ -25,7 +28,7 @@ var config = new ConfigurationBuilder()
 
 var botData = BotData.LoadData();
 
-var discordConfig = new DiscordSocketConfig()
+var discordConfig = new DiscordSocketConfig
 {
     GatewayIntents = GatewayIntents.Guilds | 
         GatewayIntents.GuildVoiceStates |
@@ -34,6 +37,14 @@ var discordConfig = new DiscordSocketConfig()
 
 var interactionConfig = new InteractionServiceConfig();
 
+var lavalinkOptions = new LavalinkNodeOptions
+{
+    RestUri = "http://localhost:2333/",
+    WebSocketUri = "ws://localhost:2333",
+    Password = "youshallnotpass",
+    AllowResuming = false
+};
+
 // Adding services
 var services = new ServiceCollection()
     .AddSingleton(botData)
@@ -41,12 +52,15 @@ var services = new ServiceCollection()
     .AddSingleton(interactionConfig)
     .AddSingleton<DiscordSocketClient>()
     .AddSingleton<InteractionService>()
-    .AddLavaNode(x =>
-    {
-        x.SelfDeaf = true;
-    })
+    .AddSingleton(lavalinkOptions)
+    .AddSingleton<IDiscordClientWrapper, DiscordClientWrapper>()
+    .AddSingleton<IAudioService, LavalinkNode>()
+    .AddSingleton(new InactivityTrackingOptions())
+    .AddSingleton<InactivityTrackingService>()
     .AddLogging(b => b.AddConsole())
     .AddLocalization(o => o.ResourcesPath = "Resources")
+    .AddSingleton<MicrosoftExtensionsLogger>()
+    .AddSingleton<ArtworkService>()
     .AddSingleton<SharedLocale>();
 
 // Building service provider
@@ -59,7 +73,8 @@ interactionConfig.LocalizationManager = new ResxLocalizationManager("SawayaSharp
 var socketClient = provider.GetRequiredService<DiscordSocketClient>();
 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
 var logger = loggerFactory.CreateLogger<Program>();
-var lavaNode = provider.GetRequiredService<LavaNode>();
+var audioService = provider.GetRequiredService<IAudioService>();
+var inactivityTracker = provider.GetRequiredService<InactivityTrackingService>();
 var interactionService = provider.GetRequiredService<InteractionService>();
 var locale = provider.GetRequiredService<SharedLocale>();
 
@@ -77,9 +92,12 @@ socketClient.Ready += async () =>
 {
     logger.LogInformation("Discord connected");
 
-    if (!lavaNode.IsConnected) {
-        await lavaNode.ConnectAsync();
-    }
+    // Initializing lavalink
+    await audioService.InitializeAsync();
+    
+    // Starts inactivity tracker
+    if(!inactivityTracker.IsTracking)
+        inactivityTracker.BeginTracking();
 
     // Registering commands
     interactionService.RegisterCommandsGloballyAsync();
@@ -114,25 +132,15 @@ AppDomain.CurrentDomain.FirstChanceException += (sender, eventArgs) =>
 Task.Run(async () =>
 {
     while (true) {
-        await PlayerModule.UpdateAllControls(lavaNode, locale, botData);
-        await Task.Delay(500);
+        await PlayerModule.UpdateAllControls(audioService, locale, botData);
+        await Task.Delay(2500);
     }
 });
 
-// Leave on track end
-lavaNode.OnTrackEnded += async eventArgs =>
+AppDomain.CurrentDomain.ProcessExit += async (sender, eventArgs) =>
 {
-    if (eventArgs.Player.Queue.Count > 0) {
-        await eventArgs.Player.SkipAsync();
-        await eventArgs.Player.UpdateVolumeAsync((ushort)eventArgs.Player.Volume);
-        return;
-    }
-    if (eventArgs.Reason is TrackEndReason.Replaced or TrackEndReason.Stopped) {
-        await eventArgs.Player.UpdateVolumeAsync((ushort)eventArgs.Player.Volume);
-        return;
-    }
-
-    await lavaNode.LeaveAsync(eventArgs.Player.VoiceChannel);
+    audioService.Dispose();
+    await socketClient.LogoutAsync();
 };
 
 // Wait indefinitely on current task

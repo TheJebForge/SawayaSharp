@@ -131,4 +131,10 @@
     <data name="resp.player.queue.empty" xml:space="preserve">
         <value>Queue is empty</value>
     </data>
+    <data name="resp.player.play.invalidlink" xml:space="preserve">
+        <value>Link is not valid</value>
+    </data>
+    <data name="resp.player.play.link" xml:space="preserve">
+        <value>Link</value>
+    </data>
 </root>

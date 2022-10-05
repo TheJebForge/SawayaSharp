@@ -137,4 +137,10 @@
     <data name="resp.player.queue.empty" xml:space="preserve">
         <value>Очередь пустая</value>
     </data>
+    <data name="resp.player.play.invalidlink" xml:space="preserve">
+        <value>Ссылка не правильная</value>
+    </data>
+    <data name="resp.player.play.link" xml:space="preserve">
+        <value>Ссылка</value>
+    </data>
 </root>

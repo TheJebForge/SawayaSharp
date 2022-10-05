@@ -1,20 +1,20 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
+using Lavalink4NET;
+using Lavalink4NET.Player;
 using Microsoft.Extensions.Logging;
-using Victoria;
-using Victoria.Responses.Search;
 
 namespace SawayaSharp.Modules;
 
 public class TestModule: InteractionModuleBase
 {
    ILogger<TestModule> _logger;
-   LavaNode _lavaNode;
+   IAudioService _audio;
    SharedLocale _locale;
 
-   public TestModule(ILogger<TestModule> logger, LavaNode lavaNode, SharedLocale locale) {
+   public TestModule(ILogger<TestModule> logger, IAudioService audio, SharedLocale locale) {
       _logger = logger;
-      _lavaNode = lavaNode;
+      _audio = audio;
       _locale = locale;
    }
 
@@ -27,12 +27,14 @@ public class TestModule: InteractionModuleBase
          return;
       }
       
-      await RespondAsync(_locale["resp.test.success"]);
-
       var channel = user.VoiceState.Value.VoiceChannel;
-      
-      await _lavaNode.JoinAsync(channel);
 
+      var player = _audio.GetPlayer<QueuedLavalinkPlayer>(user.Guild.Id);
+      if (player == null) {
+         player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, channel.Id, true);
+         await player.SetVolumeAsync(0.5f);
+      }
+      
       var link = new Random().Next(0, 17) switch
       {
          0 => "https://www.youtube.com/watch?v=POb02mjj2zE",
@@ -55,11 +57,14 @@ public class TestModule: InteractionModuleBase
          _ => throw new ArgumentOutOfRangeException()
       };
 
-      var search = await _lavaNode.SearchAsync(SearchType.Direct, link);
+      var track = await _audio.GetTrackAsync(link);
 
-      var player = _lavaNode.GetPlayer(user.Guild);
+      if (track == null) {
+         await RespondAsync(_locale["resp.test.failure"]);
+         return;
+      }
 
-      await player.PlayAsync(search.Tracks.First());
-      await player.UpdateVolumeAsync(15);
+      await player.PlayAsync(track, true);
+      await RespondAsync(_locale["resp.test.success"]);
    }
 }
