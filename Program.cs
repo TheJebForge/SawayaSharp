@@ -139,8 +139,8 @@ Task.Run(async () =>
 
 AppDomain.CurrentDomain.ProcessExit += async (sender, eventArgs) =>
 {
-    audioService.Dispose();
     await socketClient.LogoutAsync();
+    audioService.Dispose();
 };
 
 // Wait indefinitely on current task
