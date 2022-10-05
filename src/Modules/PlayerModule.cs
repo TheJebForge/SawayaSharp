@@ -345,7 +345,7 @@ public class PlayerModule: InteractionModuleBase
 
             if (user!.VoiceChannel != null) {
                 player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, user.VoiceChannel.Id, true);
-                await player.SetVolumeAsync(0.5f);
+                await player.SetVolumeAsync(0.1f);
             }
             else {
                 await RespondAsync(_locale["resp.player.novoicechannel"]);
