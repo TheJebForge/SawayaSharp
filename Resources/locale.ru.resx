@@ -23,7 +23,7 @@
     <data name="guild.description" xml:space="preserve">
         <value>Команды для управление настройками гилда</value>
     </data>
-    <data name="resp.guild.locale.set" xml:space="preserve">
+    <data name="resp.guild.locale.set.title" xml:space="preserve">
         <value>Язык обновлен</value>
     </data>
     <data name="guild.locale.description" xml:space="preserve">
@@ -37,5 +37,104 @@
     </data>
     <data name="guild.locale.name" xml:space="preserve">
         <value>locale</value>
+    </data>
+    <data name="player.name" xml:space="preserve">
+        <value>player</value>
+    </data>
+    <data name="player.description" xml:space="preserve">
+        <value>Команды для управления плеером</value>
+    </data>
+    <data name="resp.guild.locale.set.desc" xml:space="preserve">
+        <value>Язык этого гилда теперь Русский</value>
+    </data>
+    <data name="player.controls.name" xml:space="preserve">
+        <value>controls</value>
+    </data>
+    <data name="player.controls.description" xml:space="preserve">
+        <value>Показывает кнопки и статус плеера</value>
+    </data>
+    <data name="resp.player.controls.noplayer" xml:space="preserve">
+        <value>Нету активного плеера</value>
+    </data>
+    <data name="resp.player.controls.play" xml:space="preserve">
+        <value>Пробуем продолжить воспроизведение</value>
+    </data>
+    <data name="resp.player.controls.pause" xml:space="preserve">
+        <value>Воспроизведение приостановлено</value>
+    </data>
+    <data name="resp.player.controls.stop" xml:space="preserve">
+        <value>Воспроизведение остановлено</value>
+    </data>
+    <data name="resp.player.controls.volume.increase" xml:space="preserve">
+        <value>Громкость увеличена до {0}%</value>
+    </data>
+    <data name="resp.player.controls.volume.decrease" xml:space="preserve">
+        <value>Громкость уменьшена до {0}%</value>
+    </data>
+    <data name="resp.player.volume.set" xml:space="preserve">
+        <value>Громкость поставлена на {0}%</value>
+    </data>
+    <data name="resp.player.controls.leave" xml:space="preserve">
+        <value>Покидаем комнату</value>
+    </data>
+    <data name="resp.player.controls.skipped" xml:space="preserve">
+        <value>Пропускаем трек</value>
+    </data>
+    <data name="resp.player.controls.emptyqueue" xml:space="preserve">
+        <value>Очередь пустая</value>
+    </data>
+    <data name="guild.locale.locale.name" xml:space="preserve">
+        <value>язык</value>
+    </data>
+    <data name="guild.locale.locale.description" xml:space="preserve">
+        <value>Язык который поставить</value>
+    </data>
+    <data name="player.volume.name" xml:space="preserve">
+        <value>volume</value>
+    </data>
+    <data name="player.volume.description" xml:space="preserve">
+        <value>Ставит громкость проигрывания</value>
+    </data>
+    <data name="resp.player.novoicechannel" xml:space="preserve">
+        <value>Ты не в войс канале</value>
+    </data>
+    <data name="player.play.name" xml:space="preserve">
+        <value>play</value>
+    </data>
+    <data name="player.play.description" xml:space="preserve">
+        <value>Пытается добавить запрос в очередь плеера</value>
+    </data>
+    <data name="player.play.query.name" xml:space="preserve">
+        <value>запрос</value>
+    </data>
+    <data name="player.play.query.description" xml:space="preserve">
+        <value>Песенку которую надо найти</value>
+    </data>
+    <data name="player.volume.volume.name" xml:space="preserve">
+        <value>громкость</value>
+    </data>
+    <data name="player.volume.volume.description" xml:space="preserve">
+        <value>Громкость воспроизведения 0-150</value>
+    </data>
+    <data name="resp.player.play.enqueued" xml:space="preserve">
+        <value>Добавлено в очередь</value>
+    </data>
+    <data name="resp.player.play.noresults" xml:space="preserve">
+        <value>Ничего не найдено</value>
+    </data>
+    <data name="resp.player.play.toobigqueue" xml:space="preserve">
+        <value>Очередь слишком большая</value>
+    </data>
+    <data name="player.queue.name" xml:space="preserve">
+        <value>queue</value>
+    </data>
+    <data name="player.queue.description" xml:space="preserve">
+        <value>Показывает очередь плеера</value>
+    </data>
+    <data name="resp.player.queue.title" xml:space="preserve">
+        <value>Очередь</value>
+    </data>
+    <data name="resp.player.queue.empty" xml:space="preserve">
+        <value>Очередь пустая</value>
     </data>
 </root>

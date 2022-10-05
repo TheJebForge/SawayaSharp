@@ -33,7 +33,7 @@ public class TestModule: InteractionModuleBase
       
       await _lavaNode.JoinAsync(channel);
 
-      var link = new Random().Next(0, 16) switch
+      var link = new Random().Next(0, 17) switch
       {
          0 => "https://www.youtube.com/watch?v=POb02mjj2zE",
          1 => "https://www.youtube.com/watch?v=Fbdq9WCkKiA",
@@ -43,14 +43,15 @@ public class TestModule: InteractionModuleBase
          5 => "https://youtu.be/lBw-pWTuq28",
          6 => "https://youtu.be/PdPMyknz3OM",
          7 => "https://youtu.be/IXFjJGZlzEE",
-         8 => "https://youtu.be/NdqbI0_0GsM",
-         9 => "https://youtu.be/wVro3s6A8z8",
-         10 => "https://youtu.be/ZQEM_vKH4gE",
-         11 => "https://youtu.be/2BrenE71KEk",
-         12 => "https://youtu.be/NdO6d1WLQKE",
-         13 => "https://youtu.be/c9Yl9B5cP6U",
-         14 => "https://youtu.be/ZaNAbMtvYGQ",
-         15 => "https://youtu.be/ql9TiOhGx0s",
+         8 => "https://youtu.be/wVro3s6A8z8",
+         9 => "https://youtu.be/ZQEM_vKH4gE",
+         10 => "https://youtu.be/2BrenE71KEk",
+         11 => "https://youtu.be/NdO6d1WLQKE",
+         12 => "https://youtu.be/c9Yl9B5cP6U",
+         13 => "https://youtu.be/ZaNAbMtvYGQ",
+         14 => "https://youtu.be/ql9TiOhGx0s",
+         15 => "https://youtu.be/4EKtjx4AAoQ",
+         16 => "https://www.youtube.com/watch?v=mzFa1rmqeeU",
          _ => throw new ArgumentOutOfRangeException()
       };
 

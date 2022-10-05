@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using System.Globalization;
 
@@ -22,7 +23,7 @@ public class GuildModule: InteractionModuleBase
     }
 
     [SlashCommand("locale", "Sets locale that the bot will be using for this guild")]
-    public async Task SetLocale(Locales locale) {
+    public async Task SetLocale([Summary(description: "Locale to set")] Locales locale) {
         _botData.GetOrNewGuild(Context.Guild).Locale = locale switch
         {
             Locales.English => "en",
@@ -33,6 +34,11 @@ public class GuildModule: InteractionModuleBase
         _botData.SaveData();
         Thread.CurrentThread.CurrentUICulture = _botData.GetOrNewGuild(Context.Guild).GetLocale();
 
-        await RespondAsync(_locale["resp.guild.locale.set"]);
+        await RespondAsync(embed: new EmbedBuilder
+        {
+            Title = _locale["resp.guild.locale.set.title"],
+            Description = _locale["resp.guild.locale.set.desc"],
+            Color = Color.Purple
+        }.Build());
     }
 }

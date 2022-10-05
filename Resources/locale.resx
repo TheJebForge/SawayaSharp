@@ -23,7 +23,7 @@
     <data name="guild.description" xml:space="preserve">
         <value />
     </data>
-    <data name="resp.guild.locale.set" xml:space="preserve">
+    <data name="resp.guild.locale.set.title" xml:space="preserve">
         <value>Locale successfully set</value>
     </data>
     <data name="guild.locale.name" xml:space="preserve">
@@ -31,5 +31,104 @@
     </data>
     <data name="guild.locale.description" xml:space="preserve">
         <value />
+    </data>
+    <data name="player.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="resp.guild.locale.set.desc" xml:space="preserve">
+        <value>English was set as language of this guild</value>
+    </data>
+    <data name="player.controls.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.controls.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="resp.player.controls.noplayer" xml:space="preserve">
+        <value>No player currently playing</value>
+    </data>
+    <data name="resp.player.controls.play" xml:space="preserve">
+        <value>Attempting to continue playback</value>
+    </data>
+    <data name="resp.player.controls.pause" xml:space="preserve">
+        <value>Playback suspended</value>
+    </data>
+    <data name="resp.player.controls.stop" xml:space="preserve">
+        <value>Playback stopped</value>
+    </data>
+    <data name="resp.player.controls.volume.increase" xml:space="preserve">
+        <value>Volume increased to {0}%</value>
+    </data>
+    <data name="resp.player.controls.volume.decrease" xml:space="preserve">
+        <value>Volume decreased to {0}%</value>
+    </data>
+    <data name="resp.player.volume.set" xml:space="preserve">
+        <value>Volume set to {0}%</value>
+    </data>
+    <data name="resp.player.controls.leave" xml:space="preserve">
+        <value>Leaving the room</value>
+    </data>
+    <data name="resp.player.controls.skipped" xml:space="preserve">
+        <value>Skipping current track</value>
+    </data>
+    <data name="resp.player.controls.emptyqueue" xml:space="preserve">
+        <value>The queue is empty</value>
+    </data>
+    <data name="guild.locale.locale.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="guild.locale.locale.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.volume.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.volume.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="resp.player.novoicechannel" xml:space="preserve">
+        <value>You're not in a voice channel</value>
+    </data>
+    <data name="player.play.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.play.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.play.query.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.play.query.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.volume.volume.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.volume.volume.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="resp.player.play.enqueued" xml:space="preserve">
+        <value>Enqueued the song</value>
+    </data>
+    <data name="resp.player.play.noresults" xml:space="preserve">
+        <value>Not found</value>
+    </data>
+    <data name="resp.player.play.toobigqueue" xml:space="preserve">
+        <value>Queue is too big</value>
+    </data>
+    <data name="player.queue.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.queue.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="resp.player.queue.title" xml:space="preserve">
+        <value>Queue</value>
+    </data>
+    <data name="resp.player.queue.empty" xml:space="preserve">
+        <value>Queue is empty</value>
     </data>
 </root>
