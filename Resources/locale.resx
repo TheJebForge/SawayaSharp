@@ -137,4 +137,7 @@
     <data name="resp.player.play.link" xml:space="preserve">
         <value>Link</value>
     </data>
+    <data name="resp.player.play.duration" xml:space="preserve">
+        <value>Duration</value>
+    </data>
 </root>

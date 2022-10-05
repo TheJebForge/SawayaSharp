@@ -338,7 +338,7 @@ public class PlayerModule: InteractionModuleBase
                 var index = 1;
                 foreach (var track in searchResult.Take(5)) {
                     
-                    embed.AddField($"{index}. {track.Title}", track.Author);
+                    embed.AddField($"{index}. {track.Title}", $"({FormatTimeSpan(track.Duration)}) - by {track.Author}");
                     buttons.WithButton(customId: $"player-playlink:{track.Uri}", label: index.ToString(), style: ButtonStyle.Secondary);
 
                     index++;
@@ -388,6 +388,7 @@ public class PlayerModule: InteractionModuleBase
             };
 
             embed.AddField(track.Title, track.Author);
+            embed.AddField(_locale["resp.player.play.duration"], FormatTimeSpan(track.Duration));
             embed.AddField(_locale["resp.player.play.link"], track.Uri);
 
             var thumbnail = await _artwork.ResolveAsync(track);

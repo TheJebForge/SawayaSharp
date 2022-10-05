@@ -143,4 +143,7 @@
     <data name="resp.player.play.link" xml:space="preserve">
         <value>Ссылка</value>
     </data>
+    <data name="resp.player.play.duration" xml:space="preserve">
+        <value>Длительность</value>
+    </data>
 </root>
