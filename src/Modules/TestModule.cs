@@ -32,7 +32,7 @@ public class TestModule: InteractionModuleBase
       var player = _audio.GetPlayer<QueuedLavalinkPlayer>(user.Guild.Id);
       if (player == null) {
          player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, channel.Id, true);
-         await player.SetVolumeAsync(0.1f);
+         await player.SetVolumeAsync(0.2f);
       }
       
       var link = new Random().Next(0, 17) switch

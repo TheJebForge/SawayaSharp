@@ -22,11 +22,13 @@ public class PlayerModule: InteractionModuleBase
     readonly SharedLocale _locale;
     readonly IAudioService _audio;
     readonly ArtworkService _artwork;
+    readonly BotData _botData;
     
-    public PlayerModule(SharedLocale locale, ILogger<PlayerModule> logger, IAudioService audio, ArtworkService artwork) {
+    public PlayerModule(SharedLocale locale, ILogger<PlayerModule> logger, IAudioService audio, ArtworkService artwork, BotData botData) {
         _locale = locale;
         _audio = audio;
         _artwork = artwork;
+        _botData = botData;
     }
 
     readonly static ConcurrentDictionary<IGuild, IUserMessage> ControlsMessages = new();
@@ -135,6 +137,11 @@ public class PlayerModule: InteractionModuleBase
         }
     }
 
+    public static void RunControlsUpdateIfExists(IAudioService audio, IStringLocalizer locale, BotData botData, IGuild guild) {
+        if (!ControlsMessages.TryGetValue(guild, out var message)) return;
+        Task.Run(() => UpdateControls(audio, locale, botData, guild, message));
+    }
+
     public static async Task UpdateAllControls(IAudioService audio, IStringLocalizer locale, BotData botData) {
         foreach (var (guild, message) in ControlsMessages) {
             await UpdateControls(audio, locale, botData, guild, message);
@@ -181,6 +188,7 @@ public class PlayerModule: InteractionModuleBase
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             await player.SetVolumeAsync(volume / 100.0f);
+            RunControlsUpdateIfExists(_audio, _locale, _botData, Context.Guild);
             await RespondAsync(_locale["resp.player.volume.set", volume]);
         }
         else {
@@ -196,10 +204,12 @@ public class PlayerModule: InteractionModuleBase
         if (player != null) {
             if (player.State == PlayerState.Playing) {
                 await player.PauseAsync();
+                RunControlsUpdateIfExists(_audio, _locale, _botData, Context.Guild);
                 await RespondAsync(_locale["resp.player.controls.pause"]);
             }
             else {
                 await player.ResumeAsync();
+                RunControlsUpdateIfExists(_audio, _locale, _botData, Context.Guild);
                 await RespondAsync(_locale["resp.player.controls.play"]);
             }
         }
@@ -216,6 +226,7 @@ public class PlayerModule: InteractionModuleBase
         if (player != null) {
             if (player.Queue.Count > 0) {
                 await player.SkipAsync();
+                RunControlsUpdateIfExists(_audio, _locale, _botData, Context.Guild);
                 await RespondAsync(_locale["resp.player.controls.skipped"]);
             }
             else {
@@ -234,6 +245,7 @@ public class PlayerModule: InteractionModuleBase
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             await player.StopAsync();
+            RunControlsUpdateIfExists(_audio, _locale, _botData, Context.Guild);
             await RespondAsync(_locale["resp.player.controls.stop"]);
         }
         else {
@@ -251,6 +263,7 @@ public class PlayerModule: InteractionModuleBase
         if (player != null) {
             var newVolume = Math.Min(1.5f, player.Volume + VolumeIncrement);
             await player.SetVolumeAsync(newVolume);
+            RunControlsUpdateIfExists(_audio, _locale, _botData, Context.Guild);
             await RespondAsync(_locale["resp.player.controls.volume.increase", player.Volume * 100]);
         }
         else {
@@ -266,6 +279,7 @@ public class PlayerModule: InteractionModuleBase
         if (player != null) {
             var newVolume = Math.Max(0f, player.Volume - VolumeIncrement);
             await player.SetVolumeAsync(newVolume);
+            RunControlsUpdateIfExists(_audio, _locale, _botData, Context.Guild);
             await RespondAsync(_locale["resp.player.controls.volume.decrease", player.Volume * 100]);
         }
         else {
@@ -280,6 +294,7 @@ public class PlayerModule: InteractionModuleBase
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             await player.StopAsync(true);
+            RunControlsUpdateIfExists(_audio, _locale, _botData, Context.Guild);
             await RespondAsync(_locale["resp.player.controls.leave"]);
         }
         else {
@@ -345,7 +360,7 @@ public class PlayerModule: InteractionModuleBase
 
             if (user!.VoiceChannel != null) {
                 player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, user.VoiceChannel.Id, true);
-                await player.SetVolumeAsync(0.1f);
+                await player.SetVolumeAsync(0.2f);
             }
             else {
                 await RespondAsync(_locale["resp.player.novoicechannel"]);

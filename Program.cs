@@ -123,7 +123,7 @@ socketClient.InteractionCreated += async i =>
 };
 
 // Logging all exceptions
-AppDomain.CurrentDomain.FirstChanceException += (sender, eventArgs) =>
+AppDomain.CurrentDomain.FirstChanceException += (_, eventArgs) =>
 {
     logger.LogError("Exception: {}", eventArgs.Exception);
 };
@@ -137,7 +137,15 @@ Task.Run(async () =>
     }
 });
 
-AppDomain.CurrentDomain.ProcessExit += async (sender, eventArgs) =>
+audioService.TrackEnd += (_, eventArgs) =>
+{
+    var guild = socketClient.GetGuild(eventArgs.Player.GuildId);
+    PlayerModule.RunControlsUpdateIfExists(audioService, locale, botData, guild);
+    return Task.CompletedTask;
+};
+
+// Process exit procedure
+AppDomain.CurrentDomain.ProcessExit += async (_, _) =>
 {
     await socketClient.LogoutAsync();
     audioService.Dispose();
