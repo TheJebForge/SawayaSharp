@@ -116,7 +116,7 @@ public class PlayerModule: InteractionModuleBase
         return (true, embedBuilder.Build());
     }
 
-    static MessageComponent BuildControlsButtons() {
+    static MessageComponent BuildControlsButtons(IStringLocalizer locale) {
         return new ComponentBuilder()
             .WithButton(customId: "player-play", emote: new Emoji("⏯"), style: ButtonStyle.Secondary)
             .WithButton(customId: "player-skip", emote: new Emoji("⏭"), style: ButtonStyle.Secondary)
@@ -127,6 +127,7 @@ public class PlayerModule: InteractionModuleBase
             .WithButton(customId: "player-volup", emote: new Emoji("🔊"), style: ButtonStyle.Secondary, row: 1)
             .WithButton(customId: "player-leave", emote: new Emoji("⏏"), style: ButtonStyle.Secondary, row: 1)
             .WithButton(customId: "player-shuffle", emote: new Emoji("🔀"), style: ButtonStyle.Secondary, row: 1)
+            .WithButton(customId: "player-queue", label: locale["resp.player.queue.title"], style: ButtonStyle.Secondary, row: 1)
             .Build();
     }
 
@@ -171,16 +172,16 @@ public class PlayerModule: InteractionModuleBase
         
         await RespondAsync(
             embed: embed,
-            components: BuildControlsButtons());
+            components: BuildControlsButtons(_locale));
 
         ControlsMessages.TryAdd(Context.Guild.Id, await GetOriginalResponseAsync());
     }
 
-    async Task AutodeleteResponse() {
+    async Task AutodeleteResponse(float time = 2.0f) {
         var message = await GetOriginalResponseAsync();
         Task.Run(async () =>
         {
-            await Task.Delay(TimeSpan.FromSeconds(2.0));
+            await Task.Delay(TimeSpan.FromSeconds(time));
             try {
                 await message.DeleteAsync();
             }
@@ -463,6 +464,7 @@ public class PlayerModule: InteractionModuleBase
         }
     }
 
+    [ComponentInteraction("player-queue", true)]
     [SlashCommand("queue", "Displays player queue")]
     public async Task ViewQueue() {
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
@@ -491,5 +493,7 @@ public class PlayerModule: InteractionModuleBase
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
         }
+
+        await AutodeleteResponse(10f);
     }
 }
