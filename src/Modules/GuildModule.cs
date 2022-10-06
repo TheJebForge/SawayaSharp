@@ -22,6 +22,7 @@ public class GuildModule: InteractionModuleBase
         Русский
     }
 
+    [DefaultMemberPermissions(GuildPermission.MoveMembers)]
     [SlashCommand("locale", "Sets locale that the bot will be using for this guild")]
     public async Task SetLocale([Summary(description: "Locale to set")] Locales locale) {
         _botData.GetOrNewGuild(Context.Guild).Locale = locale switch

@@ -146,4 +146,55 @@
     <data name="resp.player.play.duration" xml:space="preserve">
         <value>Длительность</value>
     </data>
+    <data name="resp.player.queue.nowplaying" xml:space="preserve">
+        <value>Сейчас играет - {0}</value>
+    </data>
+    <data name="resp.player.controls.looped" xml:space="preserve">
+        <value>Авто-повтор включен</value>
+    </data>
+    <data name="resp.player.controls.unlooped" xml:space="preserve">
+        <value>Авто-повтор выключен</value>
+    </data>
+    <data name="resp.player.controls.shuffled" xml:space="preserve">
+        <value>Перетасовка очереди</value>
+    </data>
+    <data name="resp.player.controls.close" xml:space="preserve">
+        <value>Удаляем панельку управления</value>
+    </data>
+    <data name="player.togglepause.name" xml:space="preserve">
+        <value>togglepause</value>
+    </data>
+    <data name="player.togglepause.description" xml:space="preserve">
+        <value>Приостанавливает или продолжает воспроизведение</value>
+    </data>
+    <data name="player.stop.name" xml:space="preserve">
+        <value>stop</value>
+    </data>
+    <data name="player.stop.description" xml:space="preserve">
+        <value>Останавливает воспроизведение текущего трека</value>
+    </data>
+    <data name="player.leave.name" xml:space="preserve">
+        <value>leave</value>
+    </data>
+    <data name="player.leave.description" xml:space="preserve">
+        <value>Останавливает воспроизведение и покидает комнату</value>
+    </data>
+    <data name="player.loop.name" xml:space="preserve">
+        <value>loop</value>
+    </data>
+    <data name="player.loop.description" xml:space="preserve">
+        <value>Переключает авто-повтор трека</value>
+    </data>
+    <data name="player.shuffle.name" xml:space="preserve">
+        <value>shuffle</value>
+    </data>
+    <data name="player.shuffle.description" xml:space="preserve">
+        <value>Перетасовка очереди плеера</value>
+    </data>
+    <data name="player.skip.name" xml:space="preserve">
+        <value>skip</value>
+    </data>
+    <data name="player.skip.description" xml:space="preserve">
+        <value>Пропускает текущий трек</value>
+    </data>
 </root>

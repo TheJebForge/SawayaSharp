@@ -140,4 +140,55 @@
     <data name="resp.player.play.duration" xml:space="preserve">
         <value>Duration</value>
     </data>
+    <data name="resp.player.queue.nowplaying" xml:space="preserve">
+        <value>Now playing - {0}</value>
+    </data>
+    <data name="resp.player.controls.looped" xml:space="preserve">
+        <value>Looped playback</value>
+    </data>
+    <data name="resp.player.controls.unlooped" xml:space="preserve">
+        <value>Normal playback</value>
+    </data>
+    <data name="resp.player.controls.shuffled" xml:space="preserve">
+        <value>Shuffled queue</value>
+    </data>
+    <data name="resp.player.controls.close" xml:space="preserve">
+        <value>Closing the controls</value>
+    </data>
+    <data name="player.togglepause.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.togglepause.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.stop.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.stop.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.leave.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.leave.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.loop.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.loop.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.shuffle.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.shuffle.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.skip.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="player.skip.description" xml:space="preserve">
+        <value />
+    </data>
 </root>

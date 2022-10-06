@@ -30,7 +30,7 @@ var botData = BotData.LoadData();
 
 var discordConfig = new DiscordSocketConfig
 {
-    GatewayIntents = GatewayIntents.Guilds | 
+    GatewayIntents = GatewayIntents.Guilds |
         GatewayIntents.GuildVoiceStates |
         GatewayIntents.GuildMembers
 };
@@ -45,6 +45,11 @@ var lavalinkOptions = new LavalinkNodeOptions
     AllowResuming = false
 };
 
+var inactivityOptions = new InactivityTrackingOptions
+{
+    DisconnectDelay = TimeSpan.FromMinutes(5)
+};
+
 // Adding services
 var services = new ServiceCollection()
     .AddSingleton(botData)
@@ -55,7 +60,7 @@ var services = new ServiceCollection()
     .AddSingleton(lavalinkOptions)
     .AddSingleton<IDiscordClientWrapper, DiscordClientWrapper>()
     .AddSingleton<IAudioService, LavalinkNode>()
-    .AddSingleton(new InactivityTrackingOptions())
+    .AddSingleton(inactivityOptions)
     .AddSingleton<InactivityTrackingService>()
     .AddLogging(b => b.AddConsole())
     .AddLocalization(o => o.ResourcesPath = "Resources")
@@ -100,10 +105,13 @@ socketClient.Ready += async () =>
         inactivityTracker.BeginTracking();
 
     // Registering commands
-    interactionService.RegisterCommandsGloballyAsync();
-    
-    foreach (var guild in socketClient.Guilds) {
-        await guild.DeleteApplicationCommandsAsync();
+    var debug = config["DebugGuild"];
+
+    if (debug != null) {
+        interactionService.RegisterCommandsToGuildAsync(ulong.Parse(debug));
+    }
+    else {
+        interactionService.RegisterCommandsGloballyAsync();        
     }
 };
 
