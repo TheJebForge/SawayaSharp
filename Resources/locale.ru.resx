@@ -200,4 +200,7 @@
     <data name="resp.player.wrongvoicechannel" xml:space="preserve">
         <value>Тебе надо быть в одном канале с ботом</value>
     </data>
+    <data name="resp.player.controls.notrack" xml:space="preserve">
+        <value>Нету трека в плеере</value>
+    </data>
 </root>

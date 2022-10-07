@@ -238,14 +238,20 @@ public class PlayerModule: InteractionModuleBase
         
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
-            if (player.State == PlayerState.Playing) {
-                await player.PauseAsync();
+            try {
+                if (player.State == PlayerState.Playing) {
+                    await player.PauseAsync();
+                }
+                else {
+                    await player.ResumeAsync();
+                }
+                
+                await DeferAsync();
             }
-            else {
-                await player.ResumeAsync();
+            catch (InvalidOperationException) {
+                await RespondAsync(_locale["resp.player.controls.notrack"]);
+                await AutodeleteResponse();
             }
-
-            await DeferAsync();
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
