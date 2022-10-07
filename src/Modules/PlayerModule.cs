@@ -118,16 +118,18 @@ public class PlayerModule: InteractionModuleBase
 
     static MessageComponent BuildControlsButtons(IStringLocalizer locale) {
         return new ComponentBuilder()
+            .WithButton(customId: "player-back", emote: new Emoji("⏪"), style: ButtonStyle.Secondary)
             .WithButton(customId: "player-play", emote: new Emoji("⏯"), style: ButtonStyle.Secondary)
-            .WithButton(customId: "player-skip", emote: new Emoji("⏭"), style: ButtonStyle.Secondary)
             .WithButton(customId: "player-stop", emote: new Emoji("⏹"), style: ButtonStyle.Secondary)
-            .WithButton(customId: "player-loop", emote: new Emoji("🔁"), style: ButtonStyle.Secondary)
-            .WithButton(customId: "player-close", label: "🗙", style: ButtonStyle.Secondary)
+            .WithButton(customId: "player-forward", emote: new Emoji("⏩"), style: ButtonStyle.Secondary)
+            .WithButton(customId: "player-skip", emote: new Emoji("⏭"), style: ButtonStyle.Secondary)
             .WithButton(customId: "player-voldown", emote: new Emoji("🔉"), style: ButtonStyle.Secondary, row: 1)
             .WithButton(customId: "player-volup", emote: new Emoji("🔊"), style: ButtonStyle.Secondary, row: 1)
             .WithButton(customId: "player-leave", emote: new Emoji("⏏"), style: ButtonStyle.Secondary, row: 1)
+            .WithButton(customId: "player-loop", emote: new Emoji("🔁"), style: ButtonStyle.Secondary, row: 1)
             .WithButton(customId: "player-shuffle", emote: new Emoji("🔀"), style: ButtonStyle.Secondary, row: 1)
-            .WithButton(customId: "player-queue", label: locale["resp.player.queue.title"], style: ButtonStyle.Secondary, row: 1)
+            .WithButton(customId: "player-queue", label: locale["resp.player.queue.title"], style: ButtonStyle.Secondary, row: 2)
+            .WithButton(customId: "player-close", label: "🗙", style: ButtonStyle.Secondary, row: 2)
             .Build();
     }
 
@@ -188,6 +190,23 @@ public class PlayerModule: InteractionModuleBase
             catch (HttpException) { }
         });
     }
+
+    bool CheckIfTroll() {
+        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        
+        if (player == null) return false;
+        if (Context.User is not SocketGuildUser user) return false;
+        if (user.VoiceState == null) return true;
+        return user.VoiceState.Value.VoiceChannel.Id != player.VoiceChannelId;
+    }
+
+    async Task<bool> DenyTroll() {
+        if (!CheckIfTroll()) return false;
+        
+        await RespondAsync(_locale["resp.player.wrongvoicechannel"]);
+        await AutodeleteResponse(5f);
+        return true;
+    }
     
     [SlashCommand("controls", "Displays controls for the player")]
     public async Task Controls() {
@@ -196,6 +215,8 @@ public class PlayerModule: InteractionModuleBase
 
     [SlashCommand("volume", "Sets playback volume")]
     public async Task SetVolume([Summary(description: "Volume to set 0-150")] int volume) {
+        if (await DenyTroll()) return;
+        
         volume = Math.Max(0, Math.Min(150, volume));
         
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
@@ -213,27 +234,30 @@ public class PlayerModule: InteractionModuleBase
     [SlashCommand("togglepause", "Toggles playback of current track")]
     [ComponentInteraction("player-play", true)]
     public async Task PlayPause() {
+        if (await DenyTroll()) return;
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             if (player.State == PlayerState.Playing) {
                 await player.PauseAsync();
-                await RespondAsync(_locale["resp.player.controls.pause"]);
             }
             else {
                 await player.ResumeAsync();
-                await RespondAsync(_locale["resp.player.controls.play"]);
             }
+
+            await DeferAsync();
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await AutodeleteResponse();
         }
-
-        await AutodeleteResponse();
     }
     
     [SlashCommand("skip", "Skips current playing track")]
     [ComponentInteraction("player-skip", true)]
     public async Task Skip() {
+        if (await DenyTroll()) return;
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             if (player.Queue.Count > 0) {
@@ -254,6 +278,8 @@ public class PlayerModule: InteractionModuleBase
     [SlashCommand("stop", "Stops playback of current song")]
     [ComponentInteraction("player-stop", true)]
     public async Task Stop() {
+        if (await DenyTroll()) return;
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             await player.StopAsync();
@@ -270,37 +296,75 @@ public class PlayerModule: InteractionModuleBase
     
     [ComponentInteraction("player-volup", true)]
     public async Task VolumeUp() {
+        if (await DenyTroll()) return;
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             var newVolume = Math.Min(1.5f, player.Volume + VolumeIncrement);
             await player.SetVolumeAsync(newVolume);
-            await RespondAsync(_locale["resp.player.controls.volume.increase", player.Volume * 100]);
+            await DeferAsync();
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await AutodeleteResponse();
         }
         
-        await AutodeleteResponse();
+        
     }
     
     [ComponentInteraction("player-voldown", true)]
     public async Task VolumeDown() {
+        if (await DenyTroll()) return;
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             var newVolume = Math.Max(0f, player.Volume - VolumeIncrement);
             await player.SetVolumeAsync(newVolume);
-            await RespondAsync(_locale["resp.player.controls.volume.decrease", player.Volume * 100]);
+            await DeferAsync();
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await AutodeleteResponse();
         }
+    }
+    
+    const float SeekIncrement = 10f;
+    
+    [ComponentInteraction("player-forward", true)]
+    public async Task SeekForward() {
+        if (await DenyTroll()) return;
         
-        await AutodeleteResponse();
+        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        if (player != null) {
+            await player.SeekPositionAsync(player.Position.Position + TimeSpan.FromSeconds(SeekIncrement));
+            await DeferAsync();
+        }
+        else {
+            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await AutodeleteResponse();
+        }
+    }
+    
+    [ComponentInteraction("player-back", true)]
+    public async Task SeekBack() {
+        if (await DenyTroll()) return;
+        
+        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        if (player != null) {
+            await player.SeekPositionAsync(player.Position.Position - TimeSpan.FromSeconds(SeekIncrement));
+            await DeferAsync();
+        }
+        else {
+            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await AutodeleteResponse();
+        }
     }
     
     [SlashCommand("leave", "Stops playback and leaves the voice channel")]
     [ComponentInteraction("player-leave", true)]
     public async Task Leave() {
+        if (await DenyTroll()) return;
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             await player.StopAsync(true);
@@ -316,6 +380,8 @@ public class PlayerModule: InteractionModuleBase
     [SlashCommand("loop", "Toggle looping of the playback")]
     [ComponentInteraction("player-loop", true)]
     public async Task Loop() {
+        if (await DenyTroll()) return;
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             player.IsLooping = !player.IsLooping;
@@ -331,6 +397,8 @@ public class PlayerModule: InteractionModuleBase
     [SlashCommand("shuffle", "Shuffles player queue")]
     [ComponentInteraction("player-shuffle", true)]
     public async Task Shuffle() {
+        if (await DenyTroll()) return;
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             if (player.Queue.Count > 0) {
@@ -354,9 +422,7 @@ public class PlayerModule: InteractionModuleBase
             await message.DeleteAsync();
         }
 
-        await RespondAsync(_locale["resp.player.controls.close"]);
-        
-        await AutodeleteResponse();
+        await DeferAsync();
     }
 
     [SlashCommand("play", "Attempts to enqueue specified query")]
