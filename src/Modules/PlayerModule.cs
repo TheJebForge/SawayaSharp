@@ -342,8 +342,13 @@ public class PlayerModule: InteractionModuleBase
         
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
-            await player.SeekPositionAsync(player.Position.Position + TimeSpan.FromSeconds(SeekIncrement));
-            await DeferAsync();
+            try {
+                await player.SeekPositionAsync(player.Position.Position + TimeSpan.FromSeconds(SeekIncrement));
+                await DeferAsync();
+            } catch (InvalidOperationException) {
+                await RespondAsync(_locale["resp.player.controls.notrack"]);
+                await AutodeleteResponse();
+            }
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
@@ -357,8 +362,13 @@ public class PlayerModule: InteractionModuleBase
         
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
-            await player.SeekPositionAsync(player.Position.Position - TimeSpan.FromSeconds(SeekIncrement));
-            await DeferAsync();
+            try {
+                await player.SeekPositionAsync(player.Position.Position - TimeSpan.FromSeconds(SeekIncrement));
+                await DeferAsync();
+            } catch (InvalidOperationException) {
+                await RespondAsync(_locale["resp.player.controls.notrack"]);
+                await AutodeleteResponse();
+            }
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"]);
