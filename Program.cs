@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using SawayaSharp;
+using SawayaSharp.Data;
 using SawayaSharp.Modules;
 using System.Globalization;
 using System.Reflection;
@@ -35,7 +36,10 @@ var discordConfig = new DiscordSocketConfig
         GatewayIntents.GuildMembers
 };
 
-var interactionConfig = new InteractionServiceConfig();
+var interactionConfig = new InteractionServiceConfig
+{
+    UseCompiledLambda = true
+};
 
 var lavalinkOptions = new LavalinkNodeOptions
 {
@@ -121,7 +125,11 @@ socketClient.InteractionCreated += async i =>
     var ctx = new SocketInteractionContext(socketClient, i);
     
     if (i is SocketMessageComponent component) {
-        logger.LogInformation("id: {}", component.Data.CustomId);        
+        logger.LogInformation("component id: {}", component.Data.CustomId);        
+    }
+    
+    if (i is SocketModal modal) {
+        logger.LogInformation("modal id: {}", modal.Data.CustomId);        
     }
     
     // Setting locale

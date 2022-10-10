@@ -197,4 +197,106 @@
     <data name="resp.player.controls.notrack" xml:space="preserve">
         <value>No track currently set in the player</value>
     </data>
+    <data name="playlist.name" xml:space="preserve">
+        <value />
+    </data>
+    <data name="playlist.description" xml:space="preserve">
+        <value />
+    </data>
+    <data name="resp.playlist.shared.title" xml:space="preserve">
+        <value>All Playlists</value>
+    </data>
+    <data name="resp.playlist.empty" xml:space="preserve">
+        <value>No playlists found</value>
+    </data>
+    <data name="resp.playlist.wrongpage" xml:space="preserve">
+        <value>This page number doesn't exist</value>
+    </data>
+    <data name="resp.playlist.mine.title" xml:space="preserve">
+        <value>My Playlists</value>
+    </data>
+    <data name="resp.playlist.page" xml:space="preserve">
+        <value>Page #{0}</value>
+    </data>
+    <data name="resp.playlist.search.title" xml:space="preserve">
+        <value>Playlists by "{0}"</value>
+    </data>
+    <data name="resp.playlist.search.mine" xml:space="preserve">
+        <value>Searching among your playlists</value>
+    </data>
+    <data name="resp.playlist.search.shared" xml:space="preserve">
+        <value>Searching among all playlists</value>
+    </data>
+    <data name="resp.playlist.id.notexist" xml:space="preserve">
+        <value>Following playlist ID "{0}" doesn't exist</value>
+    </data>
+    <data name="resp.playlist.title" xml:space="preserve">
+        <value>Playlist "{0}"</value>
+    </data>
+    <data name="resp.playlist.contributors" xml:space="preserve">
+        <value>Contributors: {0}</value>
+    </data>
+    <data name="resp.playlist.owner" xml:space="preserve">
+        <value>Owner: {0}</value>
+    </data>
+    <data name="resp.playlist.trackcount" xml:space="preserve">
+        <value>Track count: {0}</value>
+    </data>
+    <data name="resp.playlist.controls.delete" xml:space="preserve">
+        <value>Delete playlist</value>
+    </data>
+    <data name="resp.playlist.controls.random" xml:space="preserve">
+        <value>Play random track</value>
+    </data>
+    <data name="resp.playlist.controls.play" xml:space="preserve">
+        <value>Play all</value>
+    </data>
+    <data name="resp.playlist.not.owner" xml:space="preserve">
+        <value>You're not an owner of the playlist</value>
+    </data>
+    <data name="resp.playlist.not.contributor" xml:space="preserve">
+        <value>You're not a contributor of the playlist</value>
+    </data>
+    <data name="resp.playlist.controls.add" xml:space="preserve">
+        <value>Add track</value>
+    </data>
+    <data name="resp.playlist.add.title" xml:space="preserve">
+        <value>Track search</value>
+    </data>
+    <data name="resp.query" xml:space="preserve">
+        <value>Query</value>
+    </data>
+    <data name="resp.playlist.add.query.desc" xml:space="preserve">
+        <value>Search query or link to track</value>
+    </data>
+    <data name="resp.playlist.added" xml:space="preserve">
+        <value>Added track to the playlist</value>
+    </data>
+    <data name="resp.playlist.adding" xml:space="preserve">
+        <value>Adding tracks to playlist "{0}"</value>
+    </data>
+    <data name="resp.playlist.controls.refresh" xml:space="preserve">
+        <value>Refresh view</value>
+    </data>
+    <data name="resp.playlist.controls.contributor.add" xml:space="preserve">
+        <value>Add contributor</value>
+    </data>
+    <data name="resp.playlist.controls.contributor.remove" xml:space="preserve">
+        <value>Remove contributor</value>
+    </data>
+    <data name="resp.playlist.controls.rename" xml:space="preserve">
+        <value>Rename</value>
+    </data>
+    <data name="resp.playlist.track.position" xml:space="preserve">
+        <value>Position: {0}</value>
+    </data>
+    <data name="resp.playlist.track.play" xml:space="preserve">
+        <value>Play</value>
+    </data>
+    <data name="resp.playlist.track.notexist" xml:space="preserve">
+        <value>Specified track doesn't exist in the playlist</value>
+    </data>
+    <data name="resp.playlist.track.delete" xml:space="preserve">
+        <value>Delete track</value>
+    </data>
 </root>

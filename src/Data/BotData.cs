@@ -1,25 +1,14 @@
 ﻿using Discord;
-using System.Globalization;
+using System.Collections.Concurrent;
 using System.Text.Json;
 
-namespace SawayaSharp;
+namespace SawayaSharp.Data;
 
 public class BotData
 {
-    public Dictionary<ulong, GuildConfig> Guilds { get; set; } = new();
-    
-    public class GuildConfig
-    {
-        public string Locale { get; set; } = "en";
+    public ConcurrentDictionary<ulong, GuildConfig> Guilds { get; set; } = new();
 
-        public CultureInfo GetLocale() {
-            return CultureInfo.GetCultureInfo(Locale);
-        }
-
-        public void SetLocale(CultureInfo locale) {
-            Locale = locale.Name;
-        }
-    }
+    public List<PlaylistInfo> Playlists { get; set; } = new();
 
     public GuildConfig GetOrNewGuild(IGuild guild) {
         return GetOrNewGuild(guild.Id);
@@ -28,16 +17,10 @@ public class BotData
     public GuildConfig GetOrNewGuild(ulong id) {
         if (Guilds.ContainsKey(id)) return Guilds[id];
         
-        Guilds.Add(id, new GuildConfig());
+        Guilds[id] = new GuildConfig();
         SaveData();
         return Guilds[id];
     }
-    
-    
-    
-    
-    
-    
     
     public void SaveData() {
         var content = JsonSerializer.Serialize(this);

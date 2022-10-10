@@ -7,12 +7,11 @@ using Lavalink4NET.Artwork;
 using Lavalink4NET.Player;
 using Lavalink4NET.Rest;
 using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Logging;
+using SawayaSharp.Data;
+using SawayaSharp.Utils;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
-
-#pragma warning disable CS4014
+// ReSharper disable UnusedTupleComponentInReturnValue
 
 namespace SawayaSharp.Modules;
 
@@ -22,25 +21,14 @@ public class PlayerModule: InteractionModuleBase
     readonly SharedLocale _locale;
     readonly IAudioService _audio;
     readonly ArtworkService _artwork;
-    readonly BotData _botData;
     
-    public PlayerModule(SharedLocale locale, ILogger<PlayerModule> logger, IAudioService audio, ArtworkService artwork, BotData botData) {
+    public PlayerModule(SharedLocale locale, IAudioService audio, ArtworkService artwork) {
         _locale = locale;
         _audio = audio;
         _artwork = artwork;
-        _botData = botData;
     }
 
     readonly static ConcurrentDictionary<ulong, IUserMessage> ControlsMessages = new();
-
-    static string FormatTimeSpan(TimeSpan timeSpan) {
-        if (timeSpan.TotalDays >= 1000000) return "Stream";
-        
-        var dayFormat = timeSpan.TotalDays >= 1 ? "d\\." : "";
-        var hourFormat = timeSpan.TotalHours >= 1 ? "hh\\:" : "";
-
-        return timeSpan.ToString($"{dayFormat}{hourFormat}mm\\:ss");
-    }
 
     static IEnumerable<string> SplitToChunks(string str, int chunkSize) {
         for (var index = 0; index < str.Length; index += chunkSize)
@@ -61,7 +49,7 @@ public class PlayerModule: InteractionModuleBase
             title = string.Join("\n", SplitToChunks(player.CurrentTrack.Title, width));
             author = string.Join("\n", SplitToChunks($"by {player.CurrentTrack.Author}", width));
             percent = player.Position.Position.TotalSeconds / player.CurrentTrack.Duration.TotalSeconds;
-            timeText = $"{FormatTimeSpan(player.Position.Position)}/{FormatTimeSpan(player.CurrentTrack.Duration)}";
+            timeText = $"{Util.FormatTimeSpan(player.Position.Position)}/{Util.FormatTimeSpan(player.CurrentTrack.Duration)}";
         }
         else {
             title = "";
@@ -136,7 +124,7 @@ public class PlayerModule: InteractionModuleBase
     static async Task UpdateControls(IAudioService audio, IStringLocalizer locale, BotData botData, IGuild guild, IUserMessage message) {
         Thread.CurrentThread.CurrentUICulture = botData.GetOrNewGuild(guild).GetLocale();
         try {
-            var (player, embed) = BuildControlsEmbed(audio, guild, locale);
+            var (_, embed) = BuildControlsEmbed(audio, guild, locale);
 
             if (!message.Embeds.First().Description.Equals(embed.Description)) {
                 await message.ModifyAsync(m =>
@@ -156,7 +144,7 @@ public class PlayerModule: InteractionModuleBase
     }
 
     public static async Task UpdateAllControls(IAudioService audio, IStringLocalizer locale, BotData botData) {
-        foreach (var (guild, message) in ControlsMessages) {
+        foreach (var (_, message) in ControlsMessages) {
             if (message.Channel is SocketGuildChannel channel) {
                 await UpdateControls(audio, locale, botData, channel.Guild, message);
             }
@@ -170,25 +158,13 @@ public class PlayerModule: InteractionModuleBase
             ControlsMessages.Remove(Context.Guild.Id, out _);
         }
         
-        var (result, embed) = BuildControlsEmbed(_audio, Context.Guild, _locale);
+        var (_, embed) = BuildControlsEmbed(_audio, Context.Guild, _locale);
         
         await RespondAsync(
             embed: embed,
             components: BuildControlsButtons(_locale));
 
         ControlsMessages.TryAdd(Context.Guild.Id, await GetOriginalResponseAsync());
-    }
-
-    async Task AutodeleteResponse(float time = 2.0f) {
-        var message = await GetOriginalResponseAsync();
-        Task.Run(async () =>
-        {
-            await Task.Delay(TimeSpan.FromSeconds(time));
-            try {
-                await message.DeleteAsync();
-            }
-            catch (HttpException) { }
-        });
     }
 
     bool CheckIfTroll() {
@@ -203,8 +179,7 @@ public class PlayerModule: InteractionModuleBase
     async Task<bool> DenyTroll() {
         if (!CheckIfTroll()) return false;
         
-        await RespondAsync(_locale["resp.player.wrongvoicechannel"]);
-        await AutodeleteResponse(5f);
+        await RespondAsync(_locale["resp.player.wrongvoicechannel"], ephemeral: true);
         return true;
     }
     
@@ -222,13 +197,11 @@ public class PlayerModule: InteractionModuleBase
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             await player.SetVolumeAsync(volume / 100.0f);
-            await RespondAsync(_locale["resp.player.volume.set", volume]);
+            await RespondAsync(_locale["resp.player.volume.set", volume], ephemeral: true);
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
-        
-        await AutodeleteResponse();
     }
 
     [SlashCommand("togglepause", "Toggles playback of current track")]
@@ -249,13 +222,11 @@ public class PlayerModule: InteractionModuleBase
                 await DeferAsync();
             }
             catch (InvalidOperationException) {
-                await RespondAsync(_locale["resp.player.controls.notrack"]);
-                await AutodeleteResponse();
+                await RespondAsync(_locale["resp.player.controls.notrack"], ephemeral: true);
             }
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
-            await AutodeleteResponse();
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
     }
     
@@ -268,17 +239,15 @@ public class PlayerModule: InteractionModuleBase
         if (player != null) {
             if (player.Queue.Count > 0) {
                 await player.SkipAsync();
-                await RespondAsync(_locale["resp.player.controls.skipped"]);
+                await RespondAsync(_locale["resp.player.controls.skipped"], ephemeral: true);
             }
             else {
-                await RespondAsync(_locale["resp.player.controls.emptyqueue"]);
+                await RespondAsync(_locale["resp.player.controls.emptyqueue"], ephemeral: true);
             }
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
-        
-        await AutodeleteResponse();
     }
     
     [SlashCommand("stop", "Stops playback of current song")]
@@ -289,13 +258,11 @@ public class PlayerModule: InteractionModuleBase
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             await player.StopAsync();
-            await RespondAsync(_locale["resp.player.controls.stop"]);
+            await RespondAsync(_locale["resp.player.controls.stop"], ephemeral: true);
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
-        
-        await AutodeleteResponse();
     }
 
     const float VolumeIncrement = 0.05f;
@@ -311,11 +278,8 @@ public class PlayerModule: InteractionModuleBase
             await DeferAsync();
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
-            await AutodeleteResponse();
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
-        
-        
     }
     
     [ComponentInteraction("player-voldown", true)]
@@ -329,8 +293,7 @@ public class PlayerModule: InteractionModuleBase
             await DeferAsync();
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
-            await AutodeleteResponse();
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
     }
     
@@ -346,13 +309,11 @@ public class PlayerModule: InteractionModuleBase
                 await player.SeekPositionAsync(player.Position.Position + TimeSpan.FromSeconds(SeekIncrement));
                 await DeferAsync();
             } catch (InvalidOperationException) {
-                await RespondAsync(_locale["resp.player.controls.notrack"]);
-                await AutodeleteResponse();
+                await RespondAsync(_locale["resp.player.controls.notrack"], ephemeral: true);
             }
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
-            await AutodeleteResponse();
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
     }
     
@@ -366,13 +327,11 @@ public class PlayerModule: InteractionModuleBase
                 await player.SeekPositionAsync(player.Position.Position - TimeSpan.FromSeconds(SeekIncrement));
                 await DeferAsync();
             } catch (InvalidOperationException) {
-                await RespondAsync(_locale["resp.player.controls.notrack"]);
-                await AutodeleteResponse();
+                await RespondAsync(_locale["resp.player.controls.notrack"], ephemeral: true);
             }
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
-            await AutodeleteResponse();
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
     }
     
@@ -384,13 +343,11 @@ public class PlayerModule: InteractionModuleBase
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             await player.StopAsync(true);
-            await RespondAsync(_locale["resp.player.controls.leave"]);
+            await RespondAsync(_locale["resp.player.controls.leave"], ephemeral: true);
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
-        
-        await AutodeleteResponse();
     }
     
     [SlashCommand("loop", "Toggle looping of the playback")]
@@ -401,13 +358,11 @@ public class PlayerModule: InteractionModuleBase
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         if (player != null) {
             player.IsLooping = !player.IsLooping;
-            await RespondAsync(_locale[player.IsLooping ? "resp.player.controls.looped" : "resp.player.controls.unlooped"]);
+            await RespondAsync(_locale[player.IsLooping ? "resp.player.controls.looped" : "resp.player.controls.unlooped"], ephemeral: true);
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
-        
-        await AutodeleteResponse();
     }
     
     [SlashCommand("shuffle", "Shuffles player queue")]
@@ -419,17 +374,15 @@ public class PlayerModule: InteractionModuleBase
         if (player != null) {
             if (player.Queue.Count > 0) {
                 player.Queue.Shuffle();
-                await RespondAsync(_locale["resp.player.controls.shuffled"]);
+                await RespondAsync(_locale["resp.player.controls.shuffled"], ephemeral: true);
             }
             else {
-                await RespondAsync(_locale["resp.player.controls.emptyqueue"]);
+                await RespondAsync(_locale["resp.player.controls.emptyqueue"], ephemeral: true);
             }
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
-        
-        await AutodeleteResponse();
     }
     
     [ComponentInteraction("player-close", true)]
@@ -457,10 +410,10 @@ public class PlayerModule: InteractionModuleBase
                     Title = $"\"{query}\"",
                     Description = _locale["resp.player.play.noresults"],
                     Color = Color.Red
-                }.Build());
+                }.Build(), ephemeral: true);
                 break;
             case 1:
-                PlayLink(searchResult.First().Uri!.ToString());
+                await PlayLink(searchResult.First().Uri!.ToString());
                 break;
             default:
             {
@@ -475,13 +428,13 @@ public class PlayerModule: InteractionModuleBase
                 var index = 1;
                 foreach (var track in searchResult.Take(5)) {
                     
-                    embed.AddField($"{index}. {track.Title}", $"({FormatTimeSpan(track.Duration)}) - by {track.Author}");
+                    embed.AddField($"{index}. {track.Title}", $"({Util.FormatTimeSpan(track.Duration)}) - by {track.Author}");
                     buttons.WithButton(customId: $"player-playlink:{track.Uri}", label: index.ToString(), style: ButtonStyle.Secondary);
 
                     index++;
                 }
 
-                await RespondAsync(embed: embed.Build(), components: buttons.Build());
+                await RespondAsync(embed: embed.Build(), components: buttons.Build(), ephemeral: true);
                 break;
             }
         }
@@ -500,8 +453,7 @@ public class PlayerModule: InteractionModuleBase
                 await player.SetVolumeAsync(0.2f);
             }
             else {
-                await RespondAsync(_locale["resp.player.novoicechannel"]);
-                await AutodeleteResponse();
+                await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
                 
                 return;
             }
@@ -510,8 +462,7 @@ public class PlayerModule: InteractionModuleBase
         var track = await _audio.GetTrackAsync(link);
 
         if (track == null) {
-            await RespondAsync(_locale["resp.player.play.invalidlink"]);
-            await AutodeleteResponse();
+            await RespondAsync(_locale["resp.player.play.invalidlink"], ephemeral: true);
             return;
         }
         
@@ -525,7 +476,7 @@ public class PlayerModule: InteractionModuleBase
             };
 
             embed.AddField(track.Title, track.Author);
-            embed.AddField(_locale["resp.player.play.duration"], FormatTimeSpan(track.Duration));
+            embed.AddField(_locale["resp.player.play.duration"], Util.FormatTimeSpan(track.Duration));
             embed.AddField(_locale["resp.player.play.link"], track.Uri);
 
             var thumbnail = await _artwork.ResolveAsync(track);
@@ -541,8 +492,7 @@ public class PlayerModule: InteractionModuleBase
             await RespondAsync(embed: embed.Build(), components: buttons);
         }
         else {
-            await RespondAsync(_locale["resp.player.play.toobigqueue"]);
-            await AutodeleteResponse();
+            await RespondAsync(_locale["resp.player.play.toobigqueue"], ephemeral: true);
         }
     }
 
@@ -559,7 +509,7 @@ public class PlayerModule: InteractionModuleBase
             };
 
             if (player.CurrentTrack != null) {
-                embed.AddField(_locale["resp.player.queue.nowplaying", player.CurrentTrack.Title], $"({FormatTimeSpan(player.CurrentTrack.Duration)}) by {player.CurrentTrack.Author}");
+                embed.AddField(_locale["resp.player.queue.nowplaying", player.CurrentTrack.Title], $"({Util.FormatTimeSpan(player.CurrentTrack.Duration)}) by {player.CurrentTrack.Author}");
             }
             
             if (player.Queue.Count <= 0) {
@@ -567,15 +517,13 @@ public class PlayerModule: InteractionModuleBase
             }
 
             foreach (var track in player.Queue) {
-                embed.AddField(track.Title, $"({FormatTimeSpan(track.Duration)}) by {track.Author}");
+                embed.AddField(track.Title, $"({Util.FormatTimeSpan(track.Duration)}) - by {track.Author}");
             }
 
-            await RespondAsync(embed: embed.Build());
+            await RespondAsync(embed: embed.Build(), ephemeral: true);
         }
         else {
-            await RespondAsync(_locale["resp.player.controls.noplayer"]);
+            await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
-
-        await AutodeleteResponse(10f);
     }
 }

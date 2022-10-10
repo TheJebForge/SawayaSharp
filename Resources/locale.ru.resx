@@ -203,4 +203,106 @@
     <data name="resp.player.controls.notrack" xml:space="preserve">
         <value>Нету трека в плеере</value>
     </data>
+    <data name="playlist.name" xml:space="preserve">
+        <value>playlist</value>
+    </data>
+    <data name="playlist.description" xml:space="preserve">
+        <value>Команды для управления плейлистами</value>
+    </data>
+    <data name="resp.playlist.shared.title" xml:space="preserve">
+        <value>Все Плейлисты</value>
+    </data>
+    <data name="resp.playlist.empty" xml:space="preserve">
+        <value>Нету плейлистов</value>
+    </data>
+    <data name="resp.playlist.wrongpage" xml:space="preserve">
+        <value>Этот номер страницы не существует</value>
+    </data>
+    <data name="resp.playlist.mine.title" xml:space="preserve">
+        <value>Мои Плейлисты</value>
+    </data>
+    <data name="resp.playlist.page" xml:space="preserve">
+        <value>Страница №{0}</value>
+    </data>
+    <data name="resp.playlist.search.mine" xml:space="preserve">
+        <value>Поиск по вашем плейлистам</value>
+    </data>
+    <data name="resp.playlist.search.shared" xml:space="preserve">
+        <value>Поиск по всем плейлистам</value>
+    </data>
+    <data name="resp.playlist.search.title" xml:space="preserve">
+        <value>Плейлисты по "{0}"</value>
+    </data>
+    <data name="resp.playlist.id.notexist" xml:space="preserve">
+        <value>Указанный ID плейлиста "{0}" не существует</value>
+    </data>
+    <data name="resp.playlist.title" xml:space="preserve">
+        <value>Плейлист "{0}"</value>
+    </data>
+    <data name="resp.playlist.contributors" xml:space="preserve">
+        <value>Участники: {0}</value>
+    </data>
+    <data name="resp.playlist.owner" xml:space="preserve">
+        <value>Владелец: {0}</value>
+    </data>
+    <data name="resp.playlist.trackcount" xml:space="preserve">
+        <value>Количество треков: {0}</value>
+    </data>
+    <data name="resp.playlist.controls.delete" xml:space="preserve">
+        <value>Удалить плейлист</value>
+    </data>
+    <data name="resp.playlist.controls.random" xml:space="preserve">
+        <value>Проиграть рандом трек</value>
+    </data>
+    <data name="resp.playlist.controls.play" xml:space="preserve">
+        <value>Проиграть все</value>
+    </data>
+    <data name="resp.playlist.not.owner" xml:space="preserve">
+        <value>Вы не владелец этого плейлиста</value>
+    </data>
+    <data name="resp.playlist.not.contributor" xml:space="preserve">
+        <value>Вы не участик этого плейлиста</value>
+    </data>
+    <data name="resp.playlist.controls.add" xml:space="preserve">
+        <value>Добавить трек</value>
+    </data>
+    <data name="resp.playlist.add.title" xml:space="preserve">
+        <value>Поиск трека</value>
+    </data>
+    <data name="resp.query" xml:space="preserve">
+        <value>Запрос</value>
+    </data>
+    <data name="resp.playlist.add.query.desc" xml:space="preserve">
+        <value>Запрос поиска или ссылка на трек</value>
+    </data>
+    <data name="resp.playlist.added" xml:space="preserve">
+        <value>Трек добавлен в плейлист</value>
+    </data>
+    <data name="resp.playlist.adding" xml:space="preserve">
+        <value>Добавляем треки в плейлист "{0}"</value>
+    </data>
+    <data name="resp.playlist.controls.refresh" xml:space="preserve">
+        <value>Обновить список</value>
+    </data>
+    <data name="resp.playlist.controls.contributor.add" xml:space="preserve">
+        <value>Добавить участника</value>
+    </data>
+    <data name="resp.playlist.controls.contributor.remove" xml:space="preserve">
+        <value>Убрать участника</value>
+    </data>
+    <data name="resp.playlist.controls.rename" xml:space="preserve">
+        <value>Переименовать</value>
+    </data>
+    <data name="resp.playlist.track.position" xml:space="preserve">
+        <value>Позиция: {0}</value>
+    </data>
+    <data name="resp.playlist.track.play" xml:space="preserve">
+        <value>Проиграть</value>
+    </data>
+    <data name="resp.playlist.track.notexist" xml:space="preserve">
+        <value>Трек не существует в плейлисте</value>
+    </data>
+    <data name="resp.playlist.track.delete" xml:space="preserve">
+        <value>Удалить трек</value>
+    </data>
 </root>
