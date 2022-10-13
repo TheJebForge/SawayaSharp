@@ -84,6 +84,12 @@ public class PlaylistModule: InteractionModuleBase
         await RespondAsync(embed: baseEmbed.Build(), components: buttons.Build(), ephemeral: ephemeral);
     }
 
+    string GetUniqueId() {
+        var guid = Guid.NewGuid().ToString();
+
+        return _botData.Playlists.Any(p => p.Id.Equals(guid)) ? GetUniqueId() : guid;
+    }
+
     async Task<string> FetchUserUsername(ulong id) {
         var guildUser = await Context.Guild.GetUserAsync(id);
 
@@ -103,6 +109,26 @@ public class PlaylistModule: InteractionModuleBase
         var user = await FetchUserUsername(playlist.Owner);
         embed.AddField($"{index + 1}. {playlist.Name}", $"by {user}");
         buttons.WithButton(customId: $"playlist-show:{playlist.Id},0", label: $"{index + 1}", style: ButtonStyle.Secondary, row: 0);
+    }
+
+    [SlashCommand("create", "Creates a new playlist")]
+    public async Task PlaylistCreate([Summary(description: "Name of the playlist")] string name) {
+        if(_botData.Playlists.Any(p => p.Owner.Equals(Context.User.Id) && p.Name.Equals(name))) {
+            await RespondAsync(_locale["resp.playlist.create.exists"], ephemeral: true);
+            return;
+        }
+
+        var newPlaylist = new PlaylistInfo()
+        {
+            Id = GetUniqueId(),
+            Name = name,
+            Owner = Context.User.Id
+        };
+        
+        _botData.Playlists.Add(newPlaylist);
+        _botData.SaveData();
+
+        await PlaylistShow(newPlaylist.Id);
     }
 
     [ComponentInteraction("playlist-list:*,*", true)]
@@ -373,5 +399,175 @@ public class PlaylistModule: InteractionModuleBase
         }
 
         await RespondAsync(embed: embed.Build(), components: buttons.Build(), ephemeral: true);
+    }
+
+    async Task ShowConfirmation(string text, string button, ButtonStyle buttonStyle, string confirmId) {
+        var embed = new EmbedBuilder
+        {
+            Title = _locale["resp.confirmation.title"],
+            Color = Color.Red,
+            Description = text
+        };
+
+        var buttons = new ComponentBuilder()
+            .WithButton(customId: confirmId, label: button, style: buttonStyle);
+
+        await RespondAsync(embed: embed.Build(), components: buttons.Build(), ephemeral: true);
+    }
+
+    [SlashCommand("delete", "Deletes the playlist")]
+    [ComponentInteraction("playlist-delete:*", true)]
+    public async Task PlaylistDelete(string id) {
+        var playlist = _botData.Playlists.FirstOrDefault(p => p.Id.Equals(id));
+
+        if (playlist == null) {
+            await RespondAsync(_locale["resp.playlist.id.notexist", id], ephemeral: true);
+
+            return;
+        }
+        
+        if (Context.User.Id != playlist.Owner) {
+            await RespondAsync(_locale["resp.playlist.not.owner"], ephemeral: true);
+
+            return;
+        }
+
+        await ShowConfirmation(
+            _locale["resp.playlist.delete.text", playlist.Name],
+            _locale["resp.playlist.controls.delete"],
+            ButtonStyle.Danger,
+            $"playlist-confirm-delete:{playlist.Id}");
+    }
+    
+    [ComponentInteraction("playlist-confirm-delete:*", true)]
+    public async Task PlaylistConfirmDelete(string id) {
+        var playlist = _botData.Playlists.FirstOrDefault(p => p.Id.Equals(id));
+
+        if (playlist == null) {
+            await RespondAsync(_locale["resp.playlist.id.notexist", id], ephemeral: true);
+
+            return;
+        }
+        
+        if (Context.User.Id != playlist.Owner) {
+            await RespondAsync(_locale["resp.playlist.not.owner"], ephemeral: true);
+
+            return;
+        }
+
+        _botData.Playlists.Remove(playlist);
+        _botData.SaveData();
+
+        await RespondAsync(_locale["resp.playlist.delete.done"], ephemeral: true);
+    }
+    
+    [ComponentInteraction("playlist-delete-track:*,*", true)]
+    public async Task PlaylistDeleteTrack(string id, int position) {
+        var playlist = _botData.Playlists.FirstOrDefault(p => p.Id.Equals(id));
+
+        if (playlist == null) {
+            await RespondAsync(_locale["resp.playlist.id.notexist", id], ephemeral: true);
+
+            return;
+        }
+        
+        if (Context.User.Id != playlist.Owner) {
+            await RespondAsync(_locale["resp.playlist.not.owner"], ephemeral: true);
+
+            return;
+        }
+
+        var track = playlist.Tracks.ElementAtOrDefault(position);
+        if (track == null) {
+            await RespondAsync(_locale["resp.playlist.track.notexist"], ephemeral: true);
+
+            return;
+        }
+
+        await ShowConfirmation(
+            _locale["resp.playlist.track.delete.text", playlist.Name],
+            _locale["resp.playlist.track.delete"],
+            ButtonStyle.Danger,
+            $"playlist-confirm-delete-track:{playlist.Id},{position},{playlist.Tracks.Count},{track.Uri}");
+    }
+    
+    [ComponentInteraction("playlist-confirm-delete-track:*,*,*,*", true)]
+    public async Task PlaylistConfirmDelete(string id, int position, int count, string link) {
+        var playlist = _botData.Playlists.FirstOrDefault(p => p.Id.Equals(id));
+
+        if (playlist == null) {
+            await RespondAsync(_locale["resp.playlist.id.notexist", id], ephemeral: true);
+
+            return;
+        }
+        
+        if (Context.User.Id != playlist.Owner) {
+            await RespondAsync(_locale["resp.playlist.not.owner"], ephemeral: true);
+
+            return;
+        }
+        
+        var track = playlist.Tracks.ElementAtOrDefault(position);
+        if (track == null || playlist.Tracks.Count != count || !Equals(track.Uri?.ToString(), link)) {
+            await RespondAsync(_locale["resp.playlist.track.notexist"], ephemeral: true);
+
+            return;
+        }
+
+        playlist.Tracks.RemoveAt(position);
+        _botData.SaveData();
+
+        await RespondAsync(_locale["resp.playlist.track.delete.done"], ephemeral: true);
+    }
+    
+    public class RenameModal : IModal
+    {
+        public string Title => "Rename playlist";
+
+        [InputLabel("Name")]
+        [ModalTextInput("new-name", placeholder: "New name for the playlist")]
+        public string NewName { get; set; } = "";
+    }
+    
+    [ComponentInteraction("playlist-start-rename:*", true)]
+    [SlashCommand("rename", "Rename a playlist")]
+    public async Task PlaylistStartRename([Summary(description: "ID of the playlist")] string id) {
+        var playlist = _botData.Playlists.FirstOrDefault(p => p.Id.Equals(id));
+
+        if (playlist == null) {
+            await RespondAsync(_locale["resp.playlist.id.notexist", id], ephemeral: true);
+
+            return;
+        }
+        
+        if (Context.User.Id != playlist.Owner) {
+            await RespondAsync(_locale["resp.playlist.not.owner"], ephemeral: true);
+
+            return;
+        }
+
+        await RespondWithModalAsync<RenameModal>($"playlist-rename-modal:{playlist.Id}");
+    }
+
+    [ModalInteraction("playlist-rename-modal:*", true)]
+    public async Task PlaylistRename(string id, RenameModal modal) {
+        var playlist = _botData.Playlists.FirstOrDefault(p => p.Id.Equals(id));
+
+        if (playlist == null) {
+            await RespondAsync(_locale["resp.playlist.id.notexist", id], ephemeral: true);
+
+            return;
+        }
+        
+        if (Context.User.Id != playlist.Owner) {
+            await RespondAsync(_locale["resp.playlist.not.owner"], ephemeral: true);
+
+            return;
+        }
+
+        playlist.Name = modal.NewName;
+        _botData.SaveData();
+
+        await RespondAsync(_locale["resp.playlist.rename.done"], ephemeral: true);
     }
 }

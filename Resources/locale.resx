@@ -299,4 +299,25 @@
     <data name="resp.playlist.track.delete" xml:space="preserve">
         <value>Delete track</value>
     </data>
+    <data name="resp.playlist.create.exists" xml:space="preserve">
+        <value>You already have a playlist with name "{0}"</value>
+    </data>
+    <data name="resp.confirmation.title" xml:space="preserve">
+        <value>Confirmation</value>
+    </data>
+    <data name="resp.playlist.delete.text" xml:space="preserve">
+        <value>Are you sure you want to delete playlist "{0}"?</value>
+    </data>
+    <data name="resp.playlist.delete.done" xml:space="preserve">
+        <value>Playlist has been deleted</value>
+    </data>
+    <data name="resp.playlist.track.delete.text" xml:space="preserve">
+        <value>Are you sure you want to delete track from the playlist?</value>
+    </data>
+    <data name="resp.playlist.track.delete.done" xml:space="preserve">
+        <value>Track has been deleted</value>
+    </data>
+    <data name="resp.playlist.rename.done" xml:space="preserve">
+        <value>Playlist has been renamed</value>
+    </data>
 </root>

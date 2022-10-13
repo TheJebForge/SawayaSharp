@@ -305,4 +305,25 @@
     <data name="resp.playlist.track.delete" xml:space="preserve">
         <value>Удалить трек</value>
     </data>
+    <data name="resp.playlist.create.exists" xml:space="preserve">
+        <value>У вас уже есть плейлист с именем "{0}"</value>
+    </data>
+    <data name="resp.confirmation.title" xml:space="preserve">
+        <value>Подтверждение</value>
+    </data>
+    <data name="resp.playlist.delete.text" xml:space="preserve">
+        <value>Вы уверены что хотите удалить плейлист "{0}"?</value>
+    </data>
+    <data name="resp.playlist.delete.done" xml:space="preserve">
+        <value>Плейлист был удален</value>
+    </data>
+    <data name="resp.playlist.track.delete.text" xml:space="preserve">
+        <value>Вы уверены что хотите удалить трек?</value>
+    </data>
+    <data name="resp.playlist.track.delete.done" xml:space="preserve">
+        <value>Трек был удален</value>
+    </data>
+    <data name="resp.playlist.rename.done" xml:space="preserve">
+        <value>Плейлист был переименован</value>
+    </data>
 </root>
