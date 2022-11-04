@@ -450,6 +450,8 @@ public class PlayerModule: InteractionModuleBase
     [ComponentInteraction("player-playlink:*", true)]
     // ReSharper disable once MemberCanBePrivate.Global
     public async Task PlayLink(string link) {
+        await DeferAsync();
+        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         
         if (player == null) {
@@ -486,9 +488,7 @@ public class PlayerModule: InteractionModuleBase
             embed.AddField(_locale["resp.playlist.name"], playlist.Name ?? "null");
             embed.AddField(_locale["resp.playlist.trackcount.noparam"], tracks.Count);
             embed.AddField(_locale["resp.player.play.link"], link);
-
-            await DeferAsync();
-
+            
             if (playlist.SelectedTrack >= 0 && playlist.SelectedTrack < tracks.Count) {
                 var selectedTrack = tracks[playlist.SelectedTrack];
 
