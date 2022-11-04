@@ -465,6 +465,8 @@ public class PlayerModule: InteractionModuleBase
                 return;
             }
         }
+        
+        await DeferAsync();
 
         var response = await _audio.LoadTracksAsync(link);
 
@@ -473,11 +475,12 @@ public class PlayerModule: InteractionModuleBase
             var tracks = (response.Tracks ?? Enumerable.Empty<LavalinkTrack>()).ToList();
 
             if (tracks.Count <= 0) {
-                await RespondAsync(_locale["resp.playlist.invalid"], ephemeral: true);
+                await ModifyOriginalResponseAsync(m =>
+                {
+                    m.Content = _locale["resp.playlist.invalid"].ToString();
+                });
                 return;
             }
-            
-            await DeferAsync();
 
             var embed = new EmbedBuilder
             {
@@ -526,7 +529,10 @@ public class PlayerModule: InteractionModuleBase
             var track = response.Tracks?.FirstOrDefault();
             
             if (track == null) {
-                await RespondAsync(_locale["resp.player.play.invalidlink"], ephemeral: true);
+                await ModifyOriginalResponseAsync(m =>
+                {
+                    m.Content = _locale["resp.playlist.invalid"].ToString();
+                });
                 return;
             }
 
@@ -552,7 +558,11 @@ public class PlayerModule: InteractionModuleBase
                 .WithButton(customId: $"player-playlink:{track.Uri}", emote: new Emoji("🔁"), style: ButtonStyle.Secondary)
                 .Build();
 
-            await RespondAsync(embed: embed.Build(), components: buttons);            
+            await ModifyOriginalResponseAsync(m =>
+            {
+                m.Embed = embed.Build();
+                m.Components = buttons;
+            });           
         }
     }
 
