@@ -80,7 +80,9 @@ public class PlayerModule: InteractionModuleBase
 
         var loopText = player.IsLooping ? "⭯" : "➡";
 
-        return $"{optinalTitle}{optionalAuthor}{seekBar}\n{playerState} {timeText} {volumeText} {loopText}";
+        var queueText = $"Enq {player.Queue.Count}";
+
+        return $"{optinalTitle}{optionalAuthor}{seekBar}\n{playerState} {timeText} {volumeText} {loopText} | {queueText}";
     }
 
     static (bool, Embed) BuildControlsEmbed(IAudioService audio, IGuild guild, IStringLocalizer locale) {
