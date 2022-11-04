@@ -487,20 +487,27 @@ public class PlayerModule: InteractionModuleBase
             embed.AddField(_locale["resp.playlist.trackcount.noparam"], tracks.Count);
             embed.AddField(_locale["resp.player.play.link"], link);
 
-            var selectedTrack = tracks[playlist.SelectedTrack];
+            if (playlist.SelectedTrack >= 0 && playlist.SelectedTrack < tracks.Count) {
+                var selectedTrack = tracks[playlist.SelectedTrack];
 
-            for (var i = playlist.SelectedTrack; i < tracks.Count; i++) {
-                await player.PlayAsync(tracks[i], true);
+                for (var i = playlist.SelectedTrack; i < tracks.Count; i++) {
+                    await player.PlayAsync(tracks[i], true);
+                }
+
+                for (var i = 0; i < playlist.SelectedTrack; i++) {
+                    await player.PlayAsync(tracks[i], true);
+                }
+
+                var thumbnail = await _artwork.ResolveAsync(selectedTrack);
+
+                if (thumbnail != null) {
+                    embed.ImageUrl = thumbnail.ToString();
+                }
             }
-            
-            for (var i = 0; i < playlist.SelectedTrack; i++) {
-                await player.PlayAsync(tracks[i], true);
-            }
-
-            var thumbnail = await _artwork.ResolveAsync(selectedTrack);
-
-            if (thumbnail != null) {
-                embed.ImageUrl = thumbnail.ToString();
+            else {
+                foreach (var track in tracks) {
+                    await player.PlayAsync(track, true);
+                }
             }
 
             var buttons = new ComponentBuilder()
