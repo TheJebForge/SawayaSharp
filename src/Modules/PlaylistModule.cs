@@ -191,8 +191,8 @@ public class PlaylistModule: InteractionModuleBase
         buttons.WithButton(customId: $"playlist-show:{playlist.Id},{page}", label: _locale["resp.playlist.controls.refresh"], style: ButtonStyle.Secondary, row: row);
 
         if (playlist.Owner == Context.User.Id) {
-            buttons.WithButton(customId: $"playlist-select-contributor:{playlist.Id},True", label: _locale["resp.playlist.controls.contributor.add"], style: ButtonStyle.Secondary, row: row + 1)
-                .WithButton(customId: $"playlist-select-contributor:{playlist.Id},False", label: _locale["resp.playlist.controls.contributor.remove"], style: ButtonStyle.Secondary, row: row + 1)
+            buttons //.WithButton(customId: $"playlist-select-contributor:{playlist.Id},True", label: _locale["resp.playlist.controls.contributor.add"], style: ButtonStyle.Secondary, row: row + 1)
+                //.WithButton(customId: $"playlist-select-contributor:{playlist.Id},False", label: _locale["resp.playlist.controls.contributor.remove"], style: ButtonStyle.Secondary, row: row + 1)
                 .WithButton(customId: $"playlist-start-rename:{playlist.Id}", label: _locale["resp.playlist.controls.rename"], style: ButtonStyle.Secondary, row: row + 1)
                 .WithButton(customId: $"playlist-delete:{playlist.Id}", label: _locale["resp.playlist.controls.delete"], style: ButtonStyle.Danger, row: row + 1);
         }
@@ -221,7 +221,7 @@ public class PlaylistModule: InteractionModuleBase
         var embed = new EmbedBuilder
         {
             Title = _locale["resp.playlist.title", playlist.Name],
-            Description = $"ID: {id}\n{owner}\n{contributorsText}{trackCount}",
+            Description = $"ID: {id}\n{owner}{trackCount}",
             Color = Color.Purple
         };
 
@@ -327,6 +327,94 @@ public class PlaylistModule: InteractionModuleBase
                 break;
             }
         }
+    }
+
+    [SlashCommand("play", "Plays specified playlist")]
+    [ComponentInteraction("playlist-play:*", true)]
+    public async Task PlaylistPlayAll([Summary(description: "ID of the playlist")] string id) {
+        var playlist = _botData.Playlists.FirstOrDefault(p => p.Id.Equals(id));
+
+        if (playlist == null) {
+            await RespondAsync(_locale["resp.playlist.id.notexist", id], ephemeral: true);
+
+            return;
+        }
+        
+        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        
+        if (player == null) {
+            var user = Context.User as SocketGuildUser;
+
+            if (user!.VoiceChannel != null) {
+                player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, user.VoiceChannel.Id, true);
+                await player.SetVolumeAsync(0.2f);
+            }
+            else {
+                await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
+                
+                return;
+            }
+        }
+
+        foreach (var track in playlist.Tracks) {
+            await player.PlayAsync(track, true);
+        }
+
+        await RespondAsync(_locale["resp.playlist.play.done"], ephemeral: true);
+    }
+    
+    [ComponentInteraction("playlist-random:*", true)]
+    public async Task PlaylistPlayRandom(string id) {
+        var playlist = _botData.Playlists.FirstOrDefault(p => p.Id.Equals(id));
+
+        if (playlist == null) {
+            await RespondAsync(_locale["resp.playlist.id.notexist", id], ephemeral: true);
+
+            return;
+        }
+        
+        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        
+        if (player == null) {
+            var user = Context.User as SocketGuildUser;
+
+            if (user!.VoiceChannel != null) {
+                player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, user.VoiceChannel.Id, true);
+                await player.SetVolumeAsync(0.2f);
+            }
+            else {
+                await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
+                
+                return;
+            }
+        }
+
+        var random = new Random();
+        var track = playlist.Tracks[random.Next(playlist.Tracks.Count)];
+
+        await player.PlayAsync(track, true);
+
+        var embed = new EmbedBuilder
+        {
+            Color = Color.Purple,
+            Title = _locale["resp.player.play.enqueued"]
+        };
+
+        embed.AddField(track.Title, track.Author);
+        embed.AddField(_locale["resp.player.play.duration"], Util.FormatTimeSpan(track.Duration));
+        embed.AddField(_locale["resp.player.play.link"], track.Uri);
+
+        var thumbnail = await _artwork.ResolveAsync(track);
+
+        if (thumbnail != null) {
+            embed.ImageUrl = thumbnail.ToString();
+        }
+
+        var buttons = new ComponentBuilder()
+            .WithButton(customId: $"player-playlink:{track.Uri}", emote: new Emoji("🔁"), style: ButtonStyle.Secondary)
+            .Build();
+
+        await RespondAsync(embed: embed.Build(), components: buttons);
     }
 
     [ComponentInteraction("playlist-add-track:*,*", true)]

@@ -326,4 +326,16 @@
     <data name="resp.playlist.rename.done" xml:space="preserve">
         <value>Плейлист был переименован</value>
     </data>
+    <data name="resp.playlist.play.done" xml:space="preserve">
+        <value>Добавили все треки в очередь</value>
+    </data>
+    <data name="resp.playlist.name" xml:space="preserve">
+        <value>Имя плейлиста</value>
+    </data>
+    <data name="resp.playlist.trackcount.noparam" xml:space="preserve">
+        <value>Количество треков</value>
+    </data>
+    <data name="resp.playlist.invalid" xml:space="preserve">
+        <value>Неправильный плейлист</value>
+    </data>
 </root>

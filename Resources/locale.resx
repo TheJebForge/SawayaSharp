@@ -320,4 +320,16 @@
     <data name="resp.playlist.rename.done" xml:space="preserve">
         <value>Playlist has been renamed</value>
     </data>
+    <data name="resp.playlist.play.done" xml:space="preserve">
+        <value>Added all tracks to queue</value>
+    </data>
+    <data name="resp.playlist.name" xml:space="preserve">
+        <value>Name of the Playlist</value>
+    </data>
+    <data name="resp.playlist.trackcount.noparam" xml:space="preserve">
+        <value>Track count</value>
+    </data>
+    <data name="resp.playlist.invalid" xml:space="preserve">
+        <value>Invalid playlist</value>
+    </data>
 </root>

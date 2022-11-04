@@ -397,12 +397,19 @@ public class PlayerModule: InteractionModuleBase
     [SlashCommand("play", "Attempts to enqueue specified query")]
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public async Task Search([Summary(description: "Song to look up")] string query) {
-        var searchResult = query.Contains("https://") || query.Contains("http://") ?
-            await _audio.GetTracksAsync(query) :
-            await _audio.GetTracksAsync(query, SearchMode.YouTube);
+        var searchResponse = query.Contains("https://") || query.Contains("http://") ?
+            await _audio.LoadTracksAsync(query) :
+            await _audio.LoadTracksAsync(query, SearchMode.YouTube);
+
+        var searchResult = (searchResponse.Tracks ?? Enumerable.Empty<LavalinkTrack>()).ToList();
         
-        var resultCount = searchResult.Count();
+        var resultCount = searchResult.Count;
         
+        if ((query.Contains("https://") || query.Contains("http://")) && searchResponse.PlaylistInfo?.Name != null) {
+            await PlayLink(query);
+            return;
+        }
+
         switch (resultCount) {
             case <= 0:
                 await RespondAsync(embed: new EmbedBuilder
@@ -459,14 +466,57 @@ public class PlayerModule: InteractionModuleBase
             }
         }
 
-        var track = await _audio.GetTrackAsync(link);
+        var response = await _audio.LoadTracksAsync(link);
 
-        if (track == null) {
-            await RespondAsync(_locale["resp.player.play.invalidlink"], ephemeral: true);
-            return;
+        if (response.PlaylistInfo?.Name != null) {
+            var playlist = response.PlaylistInfo;
+            var tracks = (response.Tracks ?? Enumerable.Empty<LavalinkTrack>()).ToList();
+
+            if (tracks.Count <= 0) {
+                await RespondAsync(_locale["resp.playlist.invalid"], ephemeral: true);
+                return;
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Color = Color.Purple,
+                Title = _locale["resp.player.play.enqueued"]
+            };
+
+            embed.AddField(_locale["resp.playlist.name"], playlist.Name ?? "null");
+            embed.AddField(_locale["resp.playlist.trackcount.noparam"], tracks.Count);
+            embed.AddField(_locale["resp.player.play.link"], link);
+
+            var selectedTrack = tracks[playlist.SelectedTrack];
+
+            for (var i = playlist.SelectedTrack; i < tracks.Count; i++) {
+                await player.PlayAsync(tracks[i], true);
+            }
+            
+            for (var i = 0; i < playlist.SelectedTrack; i++) {
+                await player.PlayAsync(tracks[i], true);
+            }
+
+            var thumbnail = await _artwork.ResolveAsync(selectedTrack);
+
+            if (thumbnail != null) {
+                embed.ImageUrl = thumbnail.ToString();
+            }
+
+            var buttons = new ComponentBuilder()
+                .WithButton(customId: $"player-playlink:{link}", emote: new Emoji("🔁"), style: ButtonStyle.Secondary)
+                .Build();
+
+            await RespondAsync(embed: embed.Build(), components: buttons);
         }
-        
-        if (player.Queue.Count < 20) {
+        else {
+            var track = response.Tracks?.FirstOrDefault();
+            
+            if (track == null) {
+                await RespondAsync(_locale["resp.player.play.invalidlink"], ephemeral: true);
+                return;
+            }
+
             await player.PlayAsync(track, true);
 
             var embed = new EmbedBuilder
@@ -489,10 +539,7 @@ public class PlayerModule: InteractionModuleBase
                 .WithButton(customId: $"player-playlink:{track.Uri}", emote: new Emoji("🔁"), style: ButtonStyle.Secondary)
                 .Build();
 
-            await RespondAsync(embed: embed.Build(), components: buttons);
-        }
-        else {
-            await RespondAsync(_locale["resp.player.play.toobigqueue"], ephemeral: true);
+            await RespondAsync(embed: embed.Build(), components: buttons);            
         }
     }
 
@@ -516,7 +563,7 @@ public class PlayerModule: InteractionModuleBase
                 embed.Description = _locale["resp.player.queue.empty"];
             }
 
-            foreach (var track in player.Queue) {
+            foreach (var track in player.Queue.Take(20)) {
                 embed.AddField(track.Title, $"({Util.FormatTimeSpan(track.Duration)}) - by {track.Author}");
             }
 
