@@ -487,6 +487,8 @@ public class PlayerModule: InteractionModuleBase
             embed.AddField(_locale["resp.playlist.trackcount.noparam"], tracks.Count);
             embed.AddField(_locale["resp.player.play.link"], link);
 
+            await DeferAsync();
+
             if (playlist.SelectedTrack >= 0 && playlist.SelectedTrack < tracks.Count) {
                 var selectedTrack = tracks[playlist.SelectedTrack];
 
