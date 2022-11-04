@@ -450,8 +450,6 @@ public class PlayerModule: InteractionModuleBase
     [ComponentInteraction("player-playlink:*", true)]
     // ReSharper disable once MemberCanBePrivate.Global
     public async Task PlayLink(string link) {
-        await DeferAsync();
-        
         var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
         
         if (player == null) {
@@ -478,6 +476,8 @@ public class PlayerModule: InteractionModuleBase
                 await RespondAsync(_locale["resp.playlist.invalid"], ephemeral: true);
                 return;
             }
+            
+            await DeferAsync();
 
             var embed = new EmbedBuilder
             {
@@ -516,7 +516,11 @@ public class PlayerModule: InteractionModuleBase
                 .WithButton(customId: $"player-playlink:{link}", emote: new Emoji("🔁"), style: ButtonStyle.Secondary)
                 .Build();
 
-            await RespondAsync(embed: embed.Build(), components: buttons);
+            await ModifyOriginalResponseAsync(m =>
+            {
+                m.Embed = embed.Build();
+                m.Components = buttons;
+            });
         }
         else {
             var track = response.Tracks?.FirstOrDefault();
