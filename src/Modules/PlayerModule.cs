@@ -443,7 +443,7 @@ public class PlayerModule: InteractionModuleBase
                     index++;
                 }
 
-                await RespondAsync(embed: embed.Build(), components: buttons.Build(), ephemeral: true);
+                await RespondAsync(embed: embed.Build(), components: buttons.Build());
                 break;
             }
         }
