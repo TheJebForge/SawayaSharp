@@ -4,8 +4,11 @@ using Discord.WebSocket;
 using FuzzySharp;
 using Lavalink4NET;
 using Lavalink4NET.Artwork;
-using Lavalink4NET.Player;
-using Lavalink4NET.Rest;
+using Lavalink4NET.Players;
+using Lavalink4NET.Players.Queued;
+using Lavalink4NET.Rest.Entities.Tracks;
+using Lavalink4NET.Tracks;
+using Lavalink4NET.DiscordNet;
 using SawayaSharp.Data;
 using SawayaSharp.Utils;
 using PlaylistInfo = SawayaSharp.Data.PlaylistInfo;
@@ -286,10 +289,10 @@ public class PlaylistModule: InteractionModuleBase
         var query = modal.Query;
         
         var search = query.Contains("https://") || query.Contains("http://") ?
-            await _audio.GetTracksAsync(query) :
-            await _audio.GetTracksAsync(query, SearchMode.YouTube);
+            await _audio.Tracks.LoadTracksAsync(query, TrackSearchMode.None) :
+            await _audio.Tracks.LoadTracksAsync(query, TrackSearchMode.YouTube);
 
-        var results = search.ToList();
+        var results = search.Tracks.ToList();
 
         switch (results.Count) {
             case <= 0:
@@ -340,24 +343,16 @@ public class PlaylistModule: InteractionModuleBase
             return;
         }
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetNewPlayerAsync();
         
         if (player == null) {
-            var user = Context.User as SocketGuildUser;
-
-            if (user!.VoiceChannel != null) {
-                player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, user.VoiceChannel.Id, true);
-                await player.SetVolumeAsync(0.2f);
-            }
-            else {
-                await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
+	        await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
                 
-                return;
-            }
+	        return;
         }
 
         foreach (var track in playlist.Tracks) {
-            await player.PlayAsync(track, true);
+            await player.PlayAsync(track);
         }
 
         await RespondAsync(_locale["resp.playlist.play.done"], ephemeral: true);
@@ -373,20 +368,12 @@ public class PlaylistModule: InteractionModuleBase
             return;
         }
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetNewPlayerAsync();
         
         if (player == null) {
-            var user = Context.User as SocketGuildUser;
-
-            if (user!.VoiceChannel != null) {
-                player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, user.VoiceChannel.Id, true);
-                await player.SetVolumeAsync(0.2f);
-            }
-            else {
-                await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
+	        await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
                 
-                return;
-            }
+	        return;
         }
 
         var random = new Random();
@@ -433,7 +420,7 @@ public class PlaylistModule: InteractionModuleBase
             return;
         }
         
-        var track = await _audio.GetTrackAsync(link);
+        var track = await _audio.Tracks.LoadTrackAsync(link, TrackSearchMode.None);
 
         if (track == null) {
             await RespondAsync(_locale["resp.player.play.invalidlink"], ephemeral: true);
@@ -657,5 +644,24 @@ public class PlaylistModule: InteractionModuleBase
         _botData.SaveData();
 
         await RespondAsync(_locale["resp.playlist.rename.done"], ephemeral: true);
+    }
+    
+    private async Task<QueuedLavalinkPlayer?> GetNewPlayerAsync() {
+	    var player = await _audio.Players.RetrieveAsync(
+		    Context,
+		    PlayerFactory.Queued,
+		    new PlayerRetrieveOptions(PlayerChannelBehavior.Join)
+	    );
+	    
+	    if (player.IsSuccess) {
+		    await player.Player.SetVolumeAsync(0.2f);
+	    }
+
+	    return player.IsSuccess ? player.Player : null;
+    }
+    
+    private async Task<QueuedLavalinkPlayer?> GetExistingPlayerAsync() {
+	    var player = await _audio.Players.GetPlayerAsync(Context.Guild.Id);
+	    return player as QueuedLavalinkPlayer;
     }
 }

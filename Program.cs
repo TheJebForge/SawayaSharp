@@ -2,23 +2,21 @@
 
 using Discord;
 using Discord.Interactions;
-using Discord.Rest;
 using Discord.WebSocket;
-using Lavalink4NET;
-using Lavalink4NET.Artwork;
-using Lavalink4NET.DiscordNet;
-using Lavalink4NET.Logging.Microsoft;
-using Lavalink4NET.Player;
-using Lavalink4NET.Tracking;
+using Lavalink4NET.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using SawayaSharp;
 using SawayaSharp.Data;
-using SawayaSharp.Modules;
 using System.Globalization;
 using System.Reflection;
+using Lavalink4NET;
+using Lavalink4NET.Artwork;
+using Lavalink4NET.InactivityTracking.Extensions;
+using SawayaSharp.Modules;
+
+
 #pragma warning disable CS4014
 
 // Getting configuration
@@ -41,19 +39,6 @@ var interactionConfig = new InteractionServiceConfig
     UseCompiledLambda = true
 };
 
-var lavalinkOptions = new LavalinkNodeOptions
-{
-    RestUri = "http://localhost:2333/",
-    WebSocketUri = "ws://localhost:2333",
-    Password = "youshallnotpass",
-    AllowResuming = false
-};
-
-var inactivityOptions = new InactivityTrackingOptions
-{
-    DisconnectDelay = TimeSpan.FromMinutes(5)
-};
-
 // Adding services
 var services = new ServiceCollection()
     .AddSingleton(botData)
@@ -61,16 +46,18 @@ var services = new ServiceCollection()
     .AddSingleton(interactionConfig)
     .AddSingleton<DiscordSocketClient>()
     .AddSingleton<InteractionService>()
-    .AddSingleton(lavalinkOptions)
-    .AddSingleton<IDiscordClientWrapper, DiscordClientWrapper>()
-    .AddSingleton<IAudioService, LavalinkNode>()
-    .AddSingleton(inactivityOptions)
-    .AddSingleton<InactivityTrackingService>()
     .AddLogging(b => b.AddConsole())
     .AddLocalization(o => o.ResourcesPath = "Resources")
-    .AddSingleton<MicrosoftExtensionsLogger>()
+    .AddSingleton<SharedLocale>()
+    .AddLavalink()
+    .AddInactivityTracking()
     .AddSingleton<ArtworkService>()
-    .AddSingleton<SharedLocale>();
+    .ConfigureLavalink(options => {
+	    options.Passphrase = "youshallnotpass";
+    })
+    .ConfigureInactivityTracking(options => {
+	    options.DefaultTimeout = TimeSpan.FromMinutes(5);
+    });
 
 // Building service provider
 var provider = services.BuildServiceProvider();
@@ -83,7 +70,6 @@ var socketClient = provider.GetRequiredService<DiscordSocketClient>();
 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
 var logger = loggerFactory.CreateLogger<Program>();
 var audioService = provider.GetRequiredService<IAudioService>();
-var inactivityTracker = provider.GetRequiredService<InactivityTrackingService>();
 var interactionService = provider.GetRequiredService<InteractionService>();
 var locale = provider.GetRequiredService<SharedLocale>();
 
@@ -101,13 +87,8 @@ socketClient.Ready += async () =>
 {
     logger.LogInformation("Discord connected");
 
-    // Initializing lavalink
-    await audioService.InitializeAsync();
+    await audioService.StartAsync();
     
-    // Starts inactivity tracker
-    if(!inactivityTracker.IsTracking)
-        inactivityTracker.BeginTracking();
-
     // Registering commands
     var debug = config["DebugGuild"];
 
@@ -153,7 +134,7 @@ Task.Run(async () =>
     }
 });
 
-audioService.TrackEnd += (_, eventArgs) =>
+audioService.TrackEnded += (_, eventArgs) =>
 {
     var guild = socketClient.GetGuild(eventArgs.Player.GuildId);
     PlayerModule.RunControlsUpdateIfExists(audioService, locale, botData, guild);
@@ -164,7 +145,6 @@ audioService.TrackEnd += (_, eventArgs) =>
 AppDomain.CurrentDomain.ProcessExit += async (_, _) =>
 {
     await socketClient.LogoutAsync();
-    audioService.Dispose();
 };
 
 // Wait indefinitely on current task

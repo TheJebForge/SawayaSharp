@@ -8,19 +8,23 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Discord.Net" Version="3.8.1" />
+      <PackageReference Include="Discord.Net" Version="3.13.1" />
       <PackageReference Include="FuzzySharp" Version="2.0.2" />
-      <PackageReference Include="Lavalink4NET" Version="3.0.0-preview.13" />
-      <PackageReference Include="Lavalink4NET.Discord.NET" Version="3.0.0-preview.13" />
-      <PackageReference Include="Lavalink4NET.Logging.Microsoft" Version="3.0.0-preview.13" />
-      <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0-rc.1.22426.10" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="7.0.0-rc.1.22426.10" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0-rc.1.22426.10" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0-rc.1.22426.10" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0-rc.1.22426.10" />
-      <PackageReference Include="Microsoft.Extensions.Localization" Version="7.0.0-rc.1.22427.2" />
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0-rc.1.22426.10" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0-rc.1.22426.10" />
+      <PackageReference Include="Lavalink4NET" Version="4.0.11" />
+      <PackageReference Include="Lavalink4NET.Abstractions" Version="4.0.11" />
+      <PackageReference Include="Lavalink4NET.Artwork" Version="4.0.11" />
+      <PackageReference Include="Lavalink4NET.Discord.NET" Version="4.0.11" />
+      <PackageReference Include="Lavalink4NET.InactivityTracking" Version="4.0.11" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Localization" Version="8.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
       <PackageReference Include="System.Globalization" Version="4.3.0" />
       <PackageReference Include="System.Threading" Version="4.3.0" />
     </ItemGroup>

@@ -1,4 +1,4 @@
-﻿using Lavalink4NET.Player;
+﻿using Lavalink4NET.Tracks;
 
 namespace SawayaSharp.Data;
 

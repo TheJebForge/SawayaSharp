@@ -3,14 +3,18 @@ using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
 using Lavalink4NET;
-using Lavalink4NET.Artwork;
-using Lavalink4NET.Player;
-using Lavalink4NET.Rest;
+using Lavalink4NET.DiscordNet;
 using Microsoft.Extensions.Localization;
 using SawayaSharp.Data;
 using SawayaSharp.Utils;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Lavalink4NET.Players;
+using Lavalink4NET.Players.Queued;
+using Lavalink4NET.Tracks;
+using Lavalink4NET.Artwork;
+using Lavalink4NET.Rest.Entities.Tracks;
+
 // ReSharper disable UnusedTupleComponentInReturnValue
 
 namespace SawayaSharp.Modules;
@@ -18,9 +22,9 @@ namespace SawayaSharp.Modules;
 [Group("player", "A list of commands for playing music")]
 public class PlayerModule: InteractionModuleBase
 {
-    readonly SharedLocale _locale;
-    readonly IAudioService _audio;
-    readonly ArtworkService _artwork;
+	private readonly SharedLocale _locale;
+	private readonly IAudioService _audio;
+	private readonly ArtworkService _artwork;
     
     public PlayerModule(SharedLocale locale, IAudioService audio, ArtworkService artwork) {
         _locale = locale;
@@ -28,16 +32,16 @@ public class PlayerModule: InteractionModuleBase
         _artwork = artwork;
     }
 
-    readonly static ConcurrentDictionary<ulong, IUserMessage> ControlsMessages = new();
+    private static readonly ConcurrentDictionary<ulong, IUserMessage> ControlsMessages = new();
 
-    static IEnumerable<string> SplitToChunks(string str, int chunkSize) {
+    private static IEnumerable<string> SplitToChunks(string str, int chunkSize) {
         for (var index = 0; index < str.Length; index += chunkSize)
         {
             yield return str.Substring(index, Math.Min(chunkSize, str.Length - index));
         }
-    } 
+    }
 
-    static string BuildControlsDescription(QueuedLavalinkPlayer player) {
+    private static string BuildControlsDescription(QueuedLavalinkPlayer player) {
         const int width = 35;
 
         string title;
@@ -45,11 +49,11 @@ public class PlayerModule: InteractionModuleBase
         double percent;
         string timeText;
 
-        if (player.CurrentTrack != null) {
+        if (player.CurrentTrack is not null && player.Position is not null) {
             title = string.Join("\n", SplitToChunks(player.CurrentTrack.Title, width));
             author = string.Join("\n", SplitToChunks($"by {player.CurrentTrack.Author}", width));
-            percent = player.Position.Position.TotalSeconds / player.CurrentTrack.Duration.TotalSeconds;
-            timeText = $"{Util.FormatTimeSpan(player.Position.Position)}/{Util.FormatTimeSpan(player.CurrentTrack.Duration)}";
+            percent = player.Position.Value.Position.TotalSeconds / player.CurrentTrack.Duration.TotalSeconds;
+            timeText = $"{Util.FormatTimeSpan(player.Position.Value.Position)}/{Util.FormatTimeSpan(player.CurrentTrack.Duration)}";
         }
         else {
             title = "";
@@ -72,22 +76,21 @@ public class PlayerModule: InteractionModuleBase
             PlayerState.Paused => "❘❘",
             PlayerState.NotPlaying => "■",
             PlayerState.Destroyed => "❌", 
-            PlayerState.NotConnected => "🔌",
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(player))
         };
         
         var volumeText = $"🔊{player.Volume * 100:0}%";
 
-        var loopText = player.IsLooping ? "⭯" : "➡";
+        var loopText = player.RepeatMode == TrackRepeatMode.Track ? "⭯" : "➡";
 
         var queueText = $"Enq {player.Queue.Count}";
 
         return $"{optinalTitle}{optionalAuthor}{seekBar}\n{playerState} {timeText} {volumeText} {loopText} | {queueText}";
     }
 
-    static (bool, Embed) BuildControlsEmbed(IAudioService audio, IGuild guild, IStringLocalizer locale) {
-        var player = audio.GetPlayer<QueuedLavalinkPlayer>(guild.Id);
-        if (player == null) {
+    private static async Task<(bool, Embed)> BuildControlsEmbed(IAudioService audio, IGuild guild, IStringLocalizer locale) {
+	    var playerRequest = await audio.Players.GetPlayerAsync(guild.Id);
+	    if (playerRequest is not QueuedLavalinkPlayer player) {
             return (false, new EmbedBuilder
             {
                 Description = locale["resp.player.controls.noplayer"]
@@ -106,27 +109,26 @@ public class PlayerModule: InteractionModuleBase
         return (true, embedBuilder.Build());
     }
 
-    static MessageComponent BuildControlsButtons(IStringLocalizer locale) {
-        return new ComponentBuilder()
-            .WithButton(customId: "player-back", emote: new Emoji("⏪"), style: ButtonStyle.Secondary)
-            .WithButton(customId: "player-play", emote: new Emoji("⏯"), style: ButtonStyle.Secondary)
-            .WithButton(customId: "player-stop", emote: new Emoji("⏹"), style: ButtonStyle.Secondary)
-            .WithButton(customId: "player-forward", emote: new Emoji("⏩"), style: ButtonStyle.Secondary)
-            .WithButton(customId: "player-skip", emote: new Emoji("⏭"), style: ButtonStyle.Secondary)
-            .WithButton(customId: "player-voldown", emote: new Emoji("🔉"), style: ButtonStyle.Secondary, row: 1)
-            .WithButton(customId: "player-volup", emote: new Emoji("🔊"), style: ButtonStyle.Secondary, row: 1)
-            .WithButton(customId: "player-leave", emote: new Emoji("⏏"), style: ButtonStyle.Secondary, row: 1)
-            .WithButton(customId: "player-loop", emote: new Emoji("🔁"), style: ButtonStyle.Secondary, row: 1)
-            .WithButton(customId: "player-shuffle", emote: new Emoji("🔀"), style: ButtonStyle.Secondary, row: 1)
-            .WithButton(customId: "player-queue", label: locale["resp.player.queue.title"], style: ButtonStyle.Secondary, row: 2)
-            .WithButton(customId: "player-close", label: "🗙", style: ButtonStyle.Secondary, row: 2)
-            .Build();
-    }
+    private static MessageComponent BuildControlsButtons(IStringLocalizer locale) =>
+	    new ComponentBuilder()
+		    .WithButton(customId: "player-back", emote: new Emoji("⏪"), style: ButtonStyle.Secondary)
+		    .WithButton(customId: "player-play", emote: new Emoji("⏯"), style: ButtonStyle.Secondary)
+		    .WithButton(customId: "player-stop", emote: new Emoji("⏹"), style: ButtonStyle.Secondary)
+		    .WithButton(customId: "player-forward", emote: new Emoji("⏩"), style: ButtonStyle.Secondary)
+		    .WithButton(customId: "player-skip", emote: new Emoji("⏭"), style: ButtonStyle.Secondary)
+		    .WithButton(customId: "player-voldown", emote: new Emoji("🔉"), style: ButtonStyle.Secondary, row: 1)
+		    .WithButton(customId: "player-volup", emote: new Emoji("🔊"), style: ButtonStyle.Secondary, row: 1)
+		    .WithButton(customId: "player-leave", emote: new Emoji("⏏"), style: ButtonStyle.Secondary, row: 1)
+		    .WithButton(customId: "player-loop", emote: new Emoji("🔁"), style: ButtonStyle.Secondary, row: 1)
+		    .WithButton(customId: "player-shuffle", emote: new Emoji("🔀"), style: ButtonStyle.Secondary, row: 1)
+		    .WithButton(customId: "player-queue", label: locale["resp.player.queue.title"], style: ButtonStyle.Secondary, row: 2)
+		    .WithButton(customId: "player-close", label: "🗙", style: ButtonStyle.Secondary, row: 2)
+		    .Build();
 
-    static async Task UpdateControls(IAudioService audio, IStringLocalizer locale, BotData botData, IGuild guild, IUserMessage message) {
+    private static async Task UpdateControls(IAudioService audio, IStringLocalizer locale, BotData botData, IGuild guild, IUserMessage message) {
         Thread.CurrentThread.CurrentUICulture = botData.GetOrNewGuild(guild).GetLocale();
         try {
-            var (_, embed) = BuildControlsEmbed(audio, guild, locale);
+            var (_, embed) = await BuildControlsEmbed(audio, guild, locale);
 
             if (!message.Embeds.First().Description.Equals(embed.Description)) {
                 await message.ModifyAsync(m =>
@@ -153,14 +155,14 @@ public class PlayerModule: InteractionModuleBase
         }
     }
 
-    async Task RespondWithControls() {
+    private async Task RespondWithControls() {
         if (ControlsMessages.ContainsKey(Context.Guild.Id)) {
             var message = ControlsMessages[Context.Guild.Id];
             await message.DeleteAsync();
             ControlsMessages.Remove(Context.Guild.Id, out _);
         }
         
-        var (_, embed) = BuildControlsEmbed(_audio, Context.Guild, _locale);
+        var (_, embed) = await BuildControlsEmbed(_audio, Context.Guild, _locale);
         
         await RespondAsync(
             embed: embed,
@@ -169,8 +171,8 @@ public class PlayerModule: InteractionModuleBase
         ControlsMessages.TryAdd(Context.Guild.Id, await GetOriginalResponseAsync());
     }
 
-    bool CheckIfTroll() {
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+    private async ValueTask<bool> CheckIfTroll() {
+        var player = await GetExistingPlayerAsync();
         
         if (player == null) return false;
         if (Context.User is not SocketGuildUser user) return false;
@@ -178,8 +180,8 @@ public class PlayerModule: InteractionModuleBase
         return user.VoiceState.Value.VoiceChannel.Id != player.VoiceChannelId;
     }
 
-    async Task<bool> DenyTroll() {
-        if (!CheckIfTroll()) return false;
+    private async Task<bool> DenyTroll() {
+        if (!await CheckIfTroll()) return false;
         
         await RespondAsync(_locale["resp.player.wrongvoicechannel"], ephemeral: true);
         return true;
@@ -196,7 +198,7 @@ public class PlayerModule: InteractionModuleBase
         
         volume = Math.Max(0, Math.Min(150, volume));
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
             await player.SetVolumeAsync(volume / 100.0f);
             await RespondAsync(_locale["resp.player.volume.set", volume], ephemeral: true);
@@ -211,7 +213,7 @@ public class PlayerModule: InteractionModuleBase
     public async Task PlayPause() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
             try {
                 if (player.State == PlayerState.Playing) {
@@ -237,7 +239,7 @@ public class PlayerModule: InteractionModuleBase
     public async Task Skip() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
             if (player.Queue.Count > 0) {
                 await player.SkipAsync();
@@ -257,7 +259,7 @@ public class PlayerModule: InteractionModuleBase
     public async Task Stop() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
             await player.StopAsync();
             await RespondAsync(_locale["resp.player.controls.stop"], ephemeral: true);
@@ -267,13 +269,13 @@ public class PlayerModule: InteractionModuleBase
         }
     }
 
-    const float VolumeIncrement = 0.05f;
+    private const float VolumeIncrement = 0.05f;
     
     [ComponentInteraction("player-volup", true)]
     public async Task VolumeUp() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
             var newVolume = Math.Min(1.5f, player.Volume + VolumeIncrement);
             await player.SetVolumeAsync(newVolume);
@@ -288,7 +290,7 @@ public class PlayerModule: InteractionModuleBase
     public async Task VolumeDown() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
             var newVolume = Math.Max(0f, player.Volume - VolumeIncrement);
             await player.SetVolumeAsync(newVolume);
@@ -298,21 +300,21 @@ public class PlayerModule: InteractionModuleBase
             await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
     }
-    
-    const float SeekIncrement = 10f;
+
+    private const float SeekIncrement = 10f;
     
     [ComponentInteraction("player-forward", true)]
     public async Task SeekForward() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
-            try {
-                await player.SeekPositionAsync(player.Position.Position + TimeSpan.FromSeconds(SeekIncrement));
-                await DeferAsync();
-            } catch (InvalidOperationException) {
-                await RespondAsync(_locale["resp.player.controls.notrack"], ephemeral: true);
-            }
+	        if (player.Position is not null) {
+		        await player.SeekAsync(player.Position.Value.Position + TimeSpan.FromSeconds(SeekIncrement));
+		        await DeferAsync();
+	        } else {
+		        await RespondAsync(_locale["resp.player.controls.notrack"], ephemeral: true);
+	        }
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
@@ -323,12 +325,12 @@ public class PlayerModule: InteractionModuleBase
     public async Task SeekBack() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
-            try {
-                await player.SeekPositionAsync(player.Position.Position - TimeSpan.FromSeconds(SeekIncrement));
+            if (player.Position is not null) {
+                await player.SeekAsync(player.Position.Value.Position - TimeSpan.FromSeconds(SeekIncrement));
                 await DeferAsync();
-            } catch (InvalidOperationException) {
+            } else {
                 await RespondAsync(_locale["resp.player.controls.notrack"], ephemeral: true);
             }
         }
@@ -342,9 +344,10 @@ public class PlayerModule: InteractionModuleBase
     public async Task Leave() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
-            await player.StopAsync(true);
+            await player.StopAsync();
+            await player.DisconnectAsync();
             await RespondAsync(_locale["resp.player.controls.leave"], ephemeral: true);
         }
         else {
@@ -357,10 +360,14 @@ public class PlayerModule: InteractionModuleBase
     public async Task Loop() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
-            player.IsLooping = !player.IsLooping;
-            await RespondAsync(_locale[player.IsLooping ? "resp.player.controls.looped" : "resp.player.controls.unlooped"], ephemeral: true);
+	        player.RepeatMode = player.RepeatMode == TrackRepeatMode.Track
+		        ? TrackRepeatMode.None
+		        : TrackRepeatMode.Track;
+            await RespondAsync(_locale[player.RepeatMode == TrackRepeatMode.Track 
+	            ? "resp.player.controls.looped" 
+	            : "resp.player.controls.unlooped"], ephemeral: true);
         }
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
@@ -372,10 +379,10 @@ public class PlayerModule: InteractionModuleBase
     public async Task Shuffle() {
         if (await DenyTroll()) return;
         
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetExistingPlayerAsync();
         if (player != null) {
             if (player.Queue.Count > 0) {
-                player.Queue.Shuffle();
+                await player.Queue.ShuffleAsync();
                 await RespondAsync(_locale["resp.player.controls.shuffled"], ephemeral: true);
             }
             else {
@@ -400,14 +407,14 @@ public class PlayerModule: InteractionModuleBase
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public async Task Search([Summary(description: "Song to look up")] string query) {
         var searchResponse = query.Contains("https://") || query.Contains("http://") ?
-            await _audio.LoadTracksAsync(query) :
-            await _audio.LoadTracksAsync(query, SearchMode.YouTube);
+            await _audio.Tracks.LoadTracksAsync(query, TrackSearchMode.None) :
+            await _audio.Tracks.LoadTracksAsync(query, TrackSearchMode.YouTube);
 
-        var searchResult = (searchResponse.Tracks ?? Enumerable.Empty<LavalinkTrack>()).ToList();
+        var searchResult = searchResponse.Tracks.ToList();
         
         var resultCount = searchResult.Count;
         
-        if ((query.Contains("https://") || query.Contains("http://")) && searchResponse.PlaylistInfo?.Name != null) {
+        if ((query.Contains("https://") || query.Contains("http://")) && searchResponse.Playlist?.Name != null) {
             await PlayLink(query);
             return;
         }
@@ -452,29 +459,21 @@ public class PlayerModule: InteractionModuleBase
     [ComponentInteraction("player-playlink:*", true)]
     // ReSharper disable once MemberCanBePrivate.Global
     public async Task PlayLink(string link) {
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetNewPlayerAsync();
         
         if (player == null) {
-            var user = Context.User as SocketGuildUser;
-
-            if (user!.VoiceChannel != null) {
-                player = await _audio.JoinAsync<QueuedLavalinkPlayer>(Context.Guild.Id, user.VoiceChannel.Id, true);
-                await player.SetVolumeAsync(0.2f);
-            }
-            else {
-                await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
-                
-                return;
-            }
+            await RespondAsync(_locale["resp.player.novoicechannel"], ephemeral: true);
+            
+            return;
         }
         
         await DeferAsync();
 
-        var response = await _audio.LoadTracksAsync(link);
+        var response = await _audio.Tracks.LoadTracksAsync(link, TrackSearchMode.None);
 
-        if (response.PlaylistInfo?.Name != null) {
-            var playlist = response.PlaylistInfo;
-            var tracks = (response.Tracks ?? Enumerable.Empty<LavalinkTrack>()).ToList();
+        if (response.Playlist?.Name != null) {
+            var (name, selectedTrack, _) = response.Playlist;
+            var tracks = response.Tracks.ToList();
 
             if (tracks.Count <= 0) {
                 await ModifyOriginalResponseAsync(m =>
@@ -490,19 +489,19 @@ public class PlayerModule: InteractionModuleBase
                 Title = _locale["resp.player.play.enqueued"]
             };
 
-            embed.AddField(_locale["resp.playlist.name"], playlist.Name ?? "null");
+            embed.AddField(_locale["resp.playlist.name"], name);
             embed.AddField(_locale["resp.playlist.trackcount.noparam"], tracks.Count);
             embed.AddField(_locale["resp.player.play.link"], link);
             
-            if (playlist.SelectedTrack >= 0 && playlist.SelectedTrack < tracks.Count) {
-                var selectedTrack = tracks[playlist.SelectedTrack];
+            if (selectedTrack is not null) {
+	            var selectedTrackIndex = tracks.IndexOf(selectedTrack);
 
-                for (var i = playlist.SelectedTrack; i < tracks.Count; i++) {
-                    await player.PlayAsync(tracks[i], true);
+                for (var i = selectedTrackIndex; i < tracks.Count; i++) {
+                    await player.PlayAsync(tracks[i]);
                 }
 
-                for (var i = 0; i < playlist.SelectedTrack; i++) {
-                    await player.PlayAsync(tracks[i], true);
+                for (var i = 0; i < selectedTrackIndex; i++) {
+                    await player.PlayAsync(tracks[i]);
                 }
 
                 var thumbnail = await _artwork.ResolveAsync(selectedTrack);
@@ -513,7 +512,7 @@ public class PlayerModule: InteractionModuleBase
             }
             else {
                 foreach (var track in tracks) {
-                    await player.PlayAsync(track, true);
+                    await player.PlayAsync(track);
                 }
             }
 
@@ -528,7 +527,7 @@ public class PlayerModule: InteractionModuleBase
             });
         }
         else {
-            var track = response.Tracks?.FirstOrDefault();
+            var track = response.Tracks.FirstOrDefault();
             
             if (track == null) {
                 await ModifyOriginalResponseAsync(m =>
@@ -538,7 +537,7 @@ public class PlayerModule: InteractionModuleBase
                 return;
             }
 
-            await player.PlayAsync(track, true);
+            await player.PlayAsync(track);
 
             var embed = new EmbedBuilder
             {
@@ -571,7 +570,7 @@ public class PlayerModule: InteractionModuleBase
     [ComponentInteraction("player-queue", true)]
     [SlashCommand("queue", "Displays player queue")]
     public async Task ViewQueue() {
-        var player = _audio.GetPlayer<QueuedLavalinkPlayer>(Context.Guild.Id);
+        var player = await GetNewPlayerAsync();
         
         if (player != null) {
             var embed = new EmbedBuilder
@@ -589,7 +588,7 @@ public class PlayerModule: InteractionModuleBase
             }
 
             foreach (var track in player.Queue.Take(20)) {
-                embed.AddField(track.Title, $"({Util.FormatTimeSpan(track.Duration)}) - by {track.Author}");
+                embed.AddField(track.Track?.Title ?? "Unknown", $"({Util.FormatTimeSpan(track.Track?.Duration ?? TimeSpan.Zero)}) - by {track.Track?.Author}");
             }
 
             await RespondAsync(embed: embed.Build(), ephemeral: true);
@@ -597,5 +596,24 @@ public class PlayerModule: InteractionModuleBase
         else {
             await RespondAsync(_locale["resp.player.controls.noplayer"], ephemeral: true);
         }
+    }
+
+    private async Task<QueuedLavalinkPlayer?> GetNewPlayerAsync() {
+	    var player = await _audio.Players.RetrieveAsync(
+		    Context,
+		    PlayerFactory.Queued,
+		    new PlayerRetrieveOptions(PlayerChannelBehavior.Join)
+	    );
+
+	    if (player.IsSuccess) {
+		    await player.Player.SetVolumeAsync(0.2f);
+	    }
+
+	    return player.IsSuccess ? player.Player : null;
+    }
+    
+    private async Task<QueuedLavalinkPlayer?> GetExistingPlayerAsync() {
+	    var player = await _audio.Players.GetPlayerAsync(Context.Guild.Id);
+	    return player as QueuedLavalinkPlayer;
     }
 }
