@@ -13,6 +13,7 @@ using System.Globalization;
 using System.Reflection;
 using Lavalink4NET;
 using Lavalink4NET.Artwork;
+using Lavalink4NET.InactivityTracking;
 using Lavalink4NET.InactivityTracking.Extensions;
 using Lavalink4NET.InactivityTracking.Trackers.Idle;
 using Lavalink4NET.InactivityTracking.Trackers.Users;
@@ -76,6 +77,7 @@ var socketClient = provider.GetRequiredService<DiscordSocketClient>();
 var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
 var logger = loggerFactory.CreateLogger<Program>();
 var audioService = provider.GetRequiredService<IAudioService>();
+var inactivityService = provider.GetRequiredService<IInactivityTrackingService>();
 var interactionService = provider.GetRequiredService<InteractionService>();
 var locale = provider.GetRequiredService<SharedLocale>();
 
@@ -94,6 +96,7 @@ socketClient.Ready += async () =>
     logger.LogInformation("Discord connected");
 
     await audioService.StartAsync();
+    await inactivityService.StartAsync();
     
     logger.LogInformation("Music initialized");
     
