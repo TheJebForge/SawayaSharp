@@ -14,6 +14,8 @@ using System.Reflection;
 using Lavalink4NET;
 using Lavalink4NET.Artwork;
 using Lavalink4NET.InactivityTracking.Extensions;
+using Lavalink4NET.InactivityTracking.Trackers.Idle;
+using Lavalink4NET.InactivityTracking.Trackers.Users;
 using SawayaSharp.Modules;
 
 
@@ -55,8 +57,12 @@ var services = new ServiceCollection()
     .ConfigureLavalink(options => {
 	    options.Passphrase = "youshallnotpass";
     })
-    .ConfigureInactivityTracking(options => {
-	    options.DefaultTimeout = TimeSpan.FromMinutes(5);
+    .ConfigureInactivityTracking(options => {})
+    .Configure<UsersInactivityTrackerOptions>(options => {
+	    options.Timeout = TimeSpan.FromMinutes(5);
+    })
+    .Configure<IdleInactivityTrackerOptions>(options => {
+	    options.Timeout = TimeSpan.FromMinutes(5);
     });
 
 // Building service provider
@@ -88,6 +94,8 @@ socketClient.Ready += async () =>
     logger.LogInformation("Discord connected");
 
     await audioService.StartAsync();
+    
+    logger.LogInformation("Music initialized");
     
     // Registering commands
     var debug = config["DebugGuild"];
